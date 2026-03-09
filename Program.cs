@@ -1,11 +1,20 @@
+using Microsoft.EntityFrameworkCore;
+using UnitTests_ExpenseAPI;
+
 var builder = WebApplication.CreateBuilder(args);
-//builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+                       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(connectionString)); // Use Sqlite extension
+
+builder.Services.AddScoped<IExpenseService, ExpenseService>();
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
-
-
-
-app.MapGet("/", () => "Hello World!");
-
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
 app.Run();

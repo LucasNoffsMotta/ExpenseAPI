@@ -147,3 +147,4 @@ D:\Projetos\c#\Web\UnitTests_ExpenseAPI\obj\Debug\net10.0\refint\UnitTests_Expen
 D:\Projetos\c#\Web\UnitTests_ExpenseAPI\obj\Debug\net10.0\UnitTests_ExpenseAPI.pdb
 D:\Projetos\c#\Web\UnitTests_ExpenseAPI\obj\Debug\net10.0\UnitTests_ExpenseAPI.genruntimeconfig.cache
 D:\Projetos\c#\Web\UnitTests_ExpenseAPI\obj\Debug\net10.0\ref\UnitTests_ExpenseAPI.dll
+D:\Projetos\c#\Web\UnitTests_ExpenseAPI\bin\Debug\net10.0\Microsoft.EntityFrameworkCore.Sqlite.dll

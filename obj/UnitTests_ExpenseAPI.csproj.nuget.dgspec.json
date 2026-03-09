@@ -64,6 +64,10 @@
               "target": "Package",
               "version": "[10.0.3, )"
             },
+            "Microsoft.EntityFrameworkCore.Sqlite": {
+              "target": "Package",
+              "version": "[10.0.3, )"
+            },
             "MinimalApis.Extensions": {
               "target": "Package",
               "version": "[0.11.0, )"
