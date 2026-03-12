@@ -1,0 +1,17 @@
+http://localhost:5239/api/expenses
+
+###
+http://localhost:5239/api/expenses/3
+
+
+###
+POST http://localhost:5239/api/expenses
+Content-Type: application/json
+
+{
+  "value": 89.90,
+  "date": "2026-03-10"
+}
+
+###
+DELETE http://localhost:5239/api/expenses/1
