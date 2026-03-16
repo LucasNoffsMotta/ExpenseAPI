@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UnitTests_ExpenseAPI;
+using UnitTests_ExpenseAPI.Services.Expense;
 
 var builder = WebApplication.CreateBuilder(args);
 

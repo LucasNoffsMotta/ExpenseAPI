@@ -1,5 +1,4 @@
-
-namespace UnitTests_ExpenseAPI;
+namespace UnitTests_ExpenseAPI.Services.Expense;
 
 public interface IExpenseService
 {

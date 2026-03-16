@@ -5,6 +5,7 @@ using Moq;
 using System.Net;
 using System.Security.Cryptography;
 using UnitTests_ExpenseAPI;
+using UnitTests_ExpenseAPI.Services.Expense;
 
 namespace ExpenseAPI.Tests;
 
