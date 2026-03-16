@@ -10,7 +10,7 @@ namespace ExpenseAPI.Tests;
 
 public class EspenseControllerTest
 {
-    private Mock<IExpenseService> _expenseServiceMock; 
+    private Mock<IExpenseService> _expenseServiceMock;
 
 
     public EspenseControllerTest()
@@ -83,7 +83,7 @@ public class EspenseControllerTest
 
         _expenseServiceMock.Setup(x => x.GetById(id))
             .ReturnsAsync(expense == null ? null : ExpenseMappings.ExpenseModelToSummaryDTO(expense));
-            
+
 
         // 2 .Act
         var controller = new ExpensesController(_expenseServiceMock.Object);
@@ -103,4 +103,55 @@ public class EspenseControllerTest
             Assert.IsType<NotFoundResult>(result);
         }
     }
+
+    [Fact]
+    public async Task Create_ActionExecute_CheckResultType()
+    {
+        // 1 .Arrange
+
+        //Valid Model
+        var createDTO = new CreateExpenseDTO(10.0m, DateOnly.MaxValue);
+        var model = ExpenseMappings.ExpenseDtoToModel(createDTO);
+
+        //Service
+        _expenseServiceMock.Setup(s => s.Create(createDTO)).ReturnsAsync(true);
+
+
+        // 2. Act
+        var controller = new ExpensesController(_expenseServiceMock.Object);
+        var response = await controller.Create(createDTO);
+
+        // 3. Assert
+        var result = Assert.IsType<OkObjectResult>(response);
+        var created = Assert.IsType<CreateExpenseDTO>(result.Value);
+    }
+
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Delete_ActionExecute_CheckResultType(bool isIDValid)
+    {
+
+        //Arrange
+        int id = 1;
+        _expenseServiceMock.Setup(s=> s.DeleteByID(id)).ReturnsAsync(isIDValid);
+
+
+        //Act
+        var controller = new ExpensesController(_expenseServiceMock.Object);
+        var response = await controller.Delete(id);
+
+        //Assert
+        if (isIDValid) Assert.IsType<OkResult>(response);
+
+        else
+        {
+            Assert.IsType<BadRequestResult>(response);
+        }
+    }
 }
+
+
+
+

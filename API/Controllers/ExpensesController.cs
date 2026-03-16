@@ -26,8 +26,11 @@ namespace UnitTests_ExpenseAPI
         public async Task<ActionResult> GetByID([FromRoute]int id)
         {
             var expense = await _expenseService.GetById(id);
-            if (expense is not null)  
+            if (expense is not null)
+            {
                 return Ok(expense);
+            }
+
             return NotFound();     
         }
 
@@ -35,14 +38,14 @@ namespace UnitTests_ExpenseAPI
         public async Task<ActionResult> Create(CreateExpenseDTO dto)
         {
             bool success = await _expenseService.Create(dto);
-            return success ? Ok(dto) : UnprocessableEntity(dto);
+            return success ? Ok(dto) : BadRequest(dto);
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
             bool success = await _expenseService.DeleteByID(id);
-            return success ? Ok() : UnprocessableEntity();
+            return success ? Ok() : BadRequest();
         }
     }
 }
