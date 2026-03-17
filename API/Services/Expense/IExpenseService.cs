@@ -4,7 +4,7 @@ public interface IExpenseService
 {
     public Task<List<SummaryExpenseDTO>> GetAll();
 
-    public Task<SummaryExpenseDTO> GetById(int id);
+    public Task<SummaryExpenseDTO?> GetById(int id);
 
     public Task<bool> DeleteByID(int id);
 

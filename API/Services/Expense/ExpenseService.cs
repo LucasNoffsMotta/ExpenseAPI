@@ -2,7 +2,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-namespace UnitTests_ExpenseAPI;
+namespace UnitTests_ExpenseAPI.Services.Expense;
 
 public class ExpenseService : IExpenseService
 {
@@ -56,10 +56,11 @@ public class ExpenseService : IExpenseService
         return sumaryList;
     }
 
-    public async Task<SummaryExpenseDTO> GetById(int id)
+    public async Task<SummaryExpenseDTO?> GetById(int id)
     {
         var model =  await _dbContext.Expenses.FindAsync(id);
-        return ExpenseMappings.ExpenseModelToSummaryDTO(model!);
+
+        return model != null ? ExpenseMappings.ExpenseModelToSummaryDTO(model!) : null;
     }
 }
 

@@ -13,7 +13,7 @@ public static class ExpenseMappings
     }
     public static SummaryExpenseDTO ExpenseModelToSummaryDTO(Expense model)
     {
-        return new SummaryExpenseDTO(model.Value, model.Date);
+        return new SummaryExpenseDTO(model.ID, model.Value, model.Date);
     }
 
 }
