@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace UnitTests_ExpenseAPI.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitDatabase : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,6 +19,7 @@ namespace UnitTests_ExpenseAPI.Migrations
                 {
                     ID = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
+                    Description = table.Column<string>(type: "TEXT", nullable: true),
                     Value = table.Column<decimal>(type: "TEXT", nullable: false),
                     Date = table.Column<DateOnly>(type: "TEXT", nullable: false)
                 },
@@ -29,11 +30,11 @@ namespace UnitTests_ExpenseAPI.Migrations
 
             migrationBuilder.InsertData(
                 table: "Expenses",
-                columns: new[] { "ID", "Date", "Value" },
+                columns: new[] { "ID", "Date", "Description", "Value" },
                 values: new object[,]
                 {
-                    { 1, new DateOnly(9999, 12, 31), 10.0m },
-                    { 2, new DateOnly(9999, 12, 31), 25.0m }
+                    { 1, new DateOnly(9999, 12, 31), null, 10.0m },
+                    { 2, new DateOnly(9999, 12, 31), "Hamburguer", 25.0m }
                 });
         }
 

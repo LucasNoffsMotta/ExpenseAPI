@@ -1,3 +1,5 @@
+using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
+
 namespace UnitTests_ExpenseAPI;
 
 public static class ExpenseMappings
@@ -6,6 +8,7 @@ public static class ExpenseMappings
     {
         Expense expense = new Expense
         {
+            Description = dto.Description,
             Value = dto.Value,
             Date = dto.Date
         };
@@ -13,7 +16,6 @@ public static class ExpenseMappings
     }
     public static SummaryExpenseDTO ExpenseModelToSummaryDTO(Expense model)
     {
-        return new SummaryExpenseDTO(model.ID, model.Value, model.Date);
+        return new SummaryExpenseDTO(model.ID, model.Description!, model.Value, model.Date);
     }
-
 }

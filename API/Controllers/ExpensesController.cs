@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 using UnitTests_ExpenseAPI.Services.Expense;
 
 namespace UnitTests_ExpenseAPI

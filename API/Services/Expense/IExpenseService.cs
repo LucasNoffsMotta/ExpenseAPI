@@ -1,3 +1,5 @@
+using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
+
 namespace UnitTests_ExpenseAPI.Services.Expense;
 
 public interface IExpenseService

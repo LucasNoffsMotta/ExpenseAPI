@@ -1,6 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using UnitTests_ExpenseAPI.Services.Expense;
+﻿using ClosedXML.Excel;
+using System.IO;
+using Microsoft.AspNetCore.Mvc;
 using UnitTests_ExpenseAPI.Services.Excel;
+using UnitTests_ExpenseAPI.Services.Expense;
+using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
+using UnitTests_ExpenseAPI.DTO.ExcelDTO;
 
 namespace UnitTests_ExpenseAPI.Controllers
 {
@@ -21,8 +25,32 @@ namespace UnitTests_ExpenseAPI.Controllers
         public async Task<IActionResult> CreateExcelTable()
         {
             var expenses = await _expenseService.GetAll();
-            string tablePath = _excelService.CreateExcelTable(expenses);
+            string tablePath = _excelService.SaveDataIntoExcelSheet(expenses);
             return tablePath != string.Empty ? Ok($"New table created at: {tablePath}") : BadRequest($"Table wasnt created: {tablePath}");
+        }
+
+        [HttpPost("import")]
+        public async Task<IActionResult> ImportTable([FromBody] ImportExcelDTO fileDTO)
+        {
+            if (!System.IO.File.Exists(fileDTO.DataFile)) return BadRequest();
+
+            try
+            {
+                XLWorkbook data = new XLWorkbook(fileDTO.DataFile);
+                var expenses = _excelService.GetObjectsFromExcel(data, typeof(CreateExpenseDTO));
+                
+                foreach(var expense in expenses)
+                {
+                    await _expenseService.Create(expense);
+                }
+            }
+
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+            return Ok();
         }
     }
 }

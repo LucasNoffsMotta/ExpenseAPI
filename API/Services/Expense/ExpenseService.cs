@@ -2,6 +2,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 namespace UnitTests_ExpenseAPI.Services.Expense;
 
 public class ExpenseService : IExpenseService

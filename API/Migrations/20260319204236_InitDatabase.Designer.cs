@@ -11,8 +11,8 @@ using UnitTests_ExpenseAPI;
 namespace UnitTests_ExpenseAPI.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260310204411_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260319204236_InitDatabase")]
+    partial class InitDatabase
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,6 +27,9 @@ namespace UnitTests_ExpenseAPI.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateOnly>("Date")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Value")
@@ -47,6 +50,7 @@ namespace UnitTests_ExpenseAPI.Migrations
                         {
                             ID = 2,
                             Date = new DateOnly(9999, 12, 31),
+                            Description = "Hamburguer",
                             Value = 25.0m
                         });
                 });

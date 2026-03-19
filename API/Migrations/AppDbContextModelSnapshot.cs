@@ -26,6 +26,9 @@ namespace UnitTests_ExpenseAPI.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal>("Value")
                         .HasColumnType("TEXT");
 
@@ -44,6 +47,7 @@ namespace UnitTests_ExpenseAPI.Migrations
                         {
                             ID = 2,
                             Date = new DateOnly(9999, 12, 31),
+                            Description = "Hamburguer",
                             Value = 25.0m
                         });
                 });
