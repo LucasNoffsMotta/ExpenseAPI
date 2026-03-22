@@ -1,12 +1,15 @@
 
 using System.ComponentModel.DataAnnotations;
+using UnitTests_ExpenseAPI.Models;
 
 namespace UnitTests_ExpenseAPI;
 public class Expense
 {
     public int ID { get; set; }
 
-    public string? Description { get; set; }
+    public Category? Category { get; set; }
+
+    public int CategoryId { get; set; }
 
     public decimal Value { get; set; }
 

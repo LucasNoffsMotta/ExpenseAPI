@@ -8,7 +8,7 @@ public static class ExpenseMappings
     {
         Expense expense = new Expense
         {
-            Description = dto.Description,
+            CategoryId = dto.CategoryID,
             Value = dto.Value,
             Date = dto.Date
         };
@@ -16,6 +16,6 @@ public static class ExpenseMappings
     }
     public static SummaryExpenseDTO ExpenseModelToSummaryDTO(Expense model)
     {
-        return new SummaryExpenseDTO(model.ID, model.Description!, model.Value, model.Date);
+        return new SummaryExpenseDTO(model.ID, model.Category!.Description, model.Value, model.Date);
     }
 }

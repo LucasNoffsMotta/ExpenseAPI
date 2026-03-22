@@ -9,7 +9,7 @@ POST http://localhost:5239/api/expenses
 Content-Type: application/json
 
 {
-  "description":"Ifood",
+  "CategoryID":"1",
   "value": 89.90,
   "date": "2026-03-10"
 }

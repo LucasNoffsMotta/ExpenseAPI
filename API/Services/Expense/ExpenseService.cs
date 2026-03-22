@@ -46,7 +46,10 @@ public class ExpenseService : IExpenseService
 
     public async Task<List<SummaryExpenseDTO>> GetAll()
     {
-        var modelList = await _dbContext.Expenses.ToListAsync();
+        var modelList = await _dbContext.Expenses
+            .Include(e => e.Category)
+            .ToListAsync();
+
         List<SummaryExpenseDTO> sumaryList = new List<SummaryExpenseDTO>();
 
         foreach(var model in modelList)

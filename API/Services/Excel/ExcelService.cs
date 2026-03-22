@@ -102,11 +102,11 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                     DateOnly date = DateOnly.FromDateTime(dt);
 
 
-                    expenses.Add(new CreateExpenseDTO(
-                        description,
-                        value,
-                        date)
-                    );
+                    //expenses.Add(new CreateExpenseDTO(
+                    //    description,
+                    //    value,
+                    //    date)
+                    //);
                 }
                 break;
             }

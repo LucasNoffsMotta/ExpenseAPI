@@ -1,8 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using UnitTests_ExpenseAPI.Models;
 namespace UnitTests_ExpenseAPI;
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Expense> Expenses { get; set; }
+
+    public DbSet<Category> Category { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -13,9 +16,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<Category>().HasData(
+            new { ID = 1, Description = "Ifood", HexadecimalColor = "#FF0000" },
+             new { ID = 2, Description = "AppleStore", HexadecimalColor = "#eb4034" }
+            );
+
          modelBuilder.Entity<Expense>().HasData(
-            new {ID = 1, Descriptiopn = "Ice Cream", Value = 10.0m, Date = DateOnly.MaxValue},
-            new {ID= 2,  Description = "Hamburguer", Value = 25.0m, Date = DateOnly.MaxValue}
+            new {ID = 1, CategoryId = 1, Value = 10.0m, Date = DateOnly.MaxValue},
+            new {ID= 2, CategoryId = 2, Value = 25.0m, Date = DateOnly.MaxValue}
         );
 
     }
