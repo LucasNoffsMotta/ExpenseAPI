@@ -5,6 +5,7 @@ using Moq;
 using System.Net;
 using System.Security.Cryptography;
 using UnitTests_ExpenseAPI;
+using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 using UnitTests_ExpenseAPI.Services.Expense;
 
 namespace ExpenseAPI.Tests;
@@ -27,13 +28,17 @@ public class EspenseControllerTest
         {
             new SummaryExpenseDTO
             (
+                1,
+                "Ifood",
                 10.0m,
                 DateOnly.MaxValue
             ),
 
             new SummaryExpenseDTO
             (
-                20.0m,
+                2,
+                "Ifood",
+                10.0m,
                 DateOnly.MaxValue
             )
         };
@@ -111,7 +116,7 @@ public class EspenseControllerTest
         // 1 .Arrange
 
         //Valid Model
-        var createDTO = new CreateExpenseDTO(10.0m, DateOnly.MaxValue);
+        var createDTO = new CreateExpenseDTO(1, 10.0m, DateOnly.MaxValue);
         var model = ExpenseMappings.ExpenseDtoToModel(createDTO);
 
         //Service

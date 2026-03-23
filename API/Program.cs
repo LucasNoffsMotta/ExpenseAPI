@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using UnitTests_ExpenseAPI;
+using UnitTests_ExpenseAPI.Services.Categories;
 using UnitTests_ExpenseAPI.Services.Excel;
 using UnitTests_ExpenseAPI.Services.Expense;
 
@@ -13,6 +14,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IExpenseService, ExpenseService>();
 builder.Services.AddScoped<IExcelService, ExcelService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 

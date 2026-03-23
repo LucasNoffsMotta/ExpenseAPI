@@ -37,7 +37,7 @@ namespace UnitTests_ExpenseAPI.Controllers
             try
             {
                 XLWorkbook data = new XLWorkbook(fileDTO.DataFile);
-                var expenses = _excelService.GetObjectsFromExcel(data, typeof(CreateExpenseDTO));
+                var expenses = await _excelService.GetObjectsFromExcel(data, typeof(CreateExpenseDTO));
                 
                 foreach(var expense in expenses)
                 {
@@ -45,12 +45,13 @@ namespace UnitTests_ExpenseAPI.Controllers
                 }
             }
 
+            //TODO: Criar uma excessao mais especifica para retornar
             catch(Exception ex)
             {
                 return BadRequest(ex.Message);
             }
 
-            return Ok();
+            return Ok(_expenseService.GetAll());
         }
     }
 }

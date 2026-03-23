@@ -4,11 +4,19 @@ using DocumentFormat.OpenXml.Spreadsheet;
 using System.Data;
 using System.Reflection;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
+using UnitTests_ExpenseAPI.Services.Categories;
 namespace UnitTests_ExpenseAPI.Services.Excel
 {
     public class ExcelService : IExcelService
     {
         const string filepath = @"C:\\Users\\PICHAU\\Desktop\\ExcelExpenses/Expenses.xlsx";
+
+        private ICategoryService categoryService;
+
+        public ExcelService(ICategoryService categoryService)
+        {
+            this.categoryService = categoryService;
+        }
 
         public string SaveDataIntoExcelSheet(List<SummaryExpenseDTO> _expenses)
         {
@@ -61,6 +69,25 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             return filepath;
         }
 
+        //Here map from expense to month
+        public async Task CreateMonthTable(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
+        {
+            string[] months = new string[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dec" };
+            IXLWorksheet[] sheets = new IXLWorksheet[12];
+
+            Dictionary<IXLWorksheet, List<SummaryExpenseDTO>> expensesPerMonth = new Dictionary<IXLWorksheet, List<SummaryExpenseDTO>>();
+
+            foreach(string month in months)
+            {
+                var monthWorkSheet = workBook.AddWorksheet(month);
+            }
+
+            foreach(var exp in _expenses)
+            {
+                
+            }
+        }
+
         public DataTable InitiateDataTable(PropertyInfo[] dataProps)
         {
             DataTable table = new DataTable();
@@ -72,43 +99,32 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             return table;
         }
 
-        public List<CreateExpenseDTO> GetObjectsFromExcel(XLWorkbook excelData, Type baseModel)
+        public async Task<List<CreateExpenseDTO>> GetObjectsFromExcel(XLWorkbook excelData, Type baseModel)
         {
             IXLWorksheet sheet = excelData.Worksheets.First();
             var columnHeaders = baseModel.GetProperties();
 
-            //foreach (IXLColumn column in sheet.ColumnsUsed())
-            //{
-            //    //Procura por um header na tabela que de match com alguma propriedade do DTO passado:
-            //    var currentPropertyName = columnHeaders.Where(h => h.Name == column.FirstCell().Value.ToString()).FirstOrDefault();
-                
-            //    if (currentPropertyName == null) return null;
-            //}
-
             List<CreateExpenseDTO> expenses = new List<CreateExpenseDTO>();
             int columnCount = sheet.LastColumnUsed()!.ColumnNumber();
             int rowCount = sheet.LastRowUsed()!.RowNumber();
+            int firstColumn = 2; //Ignore the ID column..
 
             //Ferindo principio SOLID! Nao dependa de implementacoes concretas, e sim de abstracoes...
-
-            //Sofrivel! Melhorar isso
-            for (int i = 0; i < columnCount - 1; i++)
+            //1st row = Header
+            //2nd row = 1st data row
+            for (int row = 0; row < rowCount - 1; row++)
             {
-                for (int j = 0; j < rowCount - 1; j++)
-                {
-                    string description = sheet.Cell(j + 2, i + 1).Value.ToString();
-                    decimal value = decimal.Parse(sheet.Cell(j + 2, i + 2).Value.ToString());
-                    DateTime dt = DateTime.Parse(sheet.Cell(j + 2, i + 3).Value.ToString());
-                    DateOnly date = DateOnly.FromDateTime(dt);
+                string description = sheet.Cell(row + 2, firstColumn).Value.ToString();
+                var category = await categoryService.GetCategoryByDescription(description);
+                decimal value = decimal.Parse(sheet.Cell(row + 2, firstColumn + 1).Value.ToString());
+                DateTime dt = DateTime.Parse(sheet.Cell(row + 2, firstColumn + 2).Value.ToString());
+                DateOnly date = DateOnly.FromDateTime(dt);
 
-
-                    //expenses.Add(new CreateExpenseDTO(
-                    //    description,
-                    //    value,
-                    //    date)
-                    //);
-                }
-                break;
+                expenses.Add(new CreateExpenseDTO(
+                    category.ID,
+                    value,
+                    date)
+                );
             }
 
             return expenses;

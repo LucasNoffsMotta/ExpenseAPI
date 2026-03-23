@@ -11,8 +11,8 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
         public DataTable InitiateDataTable(PropertyInfo[] dataProps);
 
-        public List<CreateExpenseDTO> GetObjectsFromExcel(XLWorkbook excelData, Type baseModel);
+        public Task<List<CreateExpenseDTO>> GetObjectsFromExcel(XLWorkbook excelData, Type baseModel);
 
-
+        public Task CreateMonthTable(XLWorkbook excelData, List<SummaryExpenseDTO> _expenses);
     }
 }
