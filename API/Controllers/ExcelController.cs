@@ -29,6 +29,26 @@ namespace UnitTests_ExpenseAPI.Controllers
             return tablePath != string.Empty ? Ok($"New table created at: {tablePath}") : BadRequest($"Table wasnt created: {tablePath}");
         }
 
+        [HttpPost("dataReport")]
+        public async Task<IActionResult> CreateCompleteDataAnalytcs()
+        {
+            var expenses = await _expenseService.GetAll();
+            XLWorkbook book = new XLWorkbook();
+
+            try
+            {
+                await _excelService.CreateMonthTable(book, expenses);
+            }
+
+            catch
+            {
+
+            }
+
+            return Ok();
+        }
+
+
         [HttpPost("import")]
         public async Task<IActionResult> ImportTable([FromBody] ImportExcelDTO fileDTO)
         {

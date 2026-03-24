@@ -32,11 +32,10 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 var workSheet = workBook.Worksheets.Add("main_sheet");
                 DataTable table = InitiateDataTable(columnHeaders);
 
-
                 //TODO: Abstrair isso para tipos genericos
                 foreach (var expense in _expenses)
                 {
-                    table.Rows.Add(expense.ID, expense.Description, expense.Value, expense.FormattedDate);
+                    table.Rows.Add(expense.ID, expense.Description, expense.Value, expense.Date.ToString());
                 }
 
                 //Insert headers on excel sheet
@@ -72,20 +71,26 @@ namespace UnitTests_ExpenseAPI.Services.Excel
         //Here map from expense to month
         public async Task CreateMonthTable(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
         {
-            string[] months = new string[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dec" };
             IXLWorksheet[] sheets = new IXLWorksheet[12];
+            Dictionary<string, IXLWorksheet> monthTableMap = new Dictionary<string, IXLWorksheet>();
+            Dictionary<string, List<SummaryExpenseDTO>> monthDtoMap = new Dictionary<string, List<SummaryExpenseDTO>>();
 
-            Dictionary<IXLWorksheet, List<SummaryExpenseDTO>> expensesPerMonth = new Dictionary<IXLWorksheet, List<SummaryExpenseDTO>>();
+            //Gather all data for each month, and then just trhow on the table!
+            //Table map: month / table
 
-            foreach(string month in months)
+            for (int i = 1; i < 13; i++)
             {
-                var monthWorkSheet = workBook.AddWorksheet(month);
+                DateOnly date = new DateOnly(2025, i, 1);
+                var sheet = workBook.AddWorksheet(date.Month.ToString("MMM"));
+                monthTableMap[date.Month.ToString("MMM")] = sheet;
             }
 
-            foreach(var exp in _expenses)
+            foreach(var expense in _expenses)
             {
-                
+                monthDtoMap[expense.Date!.Month.ToString("MMM")].Add(expense);
             }
+            //Aqui ja tenho um dicionario com os dtos separados por mes..
+
         }
 
         public DataTable InitiateDataTable(PropertyInfo[] dataProps)
@@ -110,6 +115,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             int firstColumn = 2; //Ignore the ID column..
 
             //Ferindo principio SOLID! Nao dependa de implementacoes concretas, e sim de abstracoes...
+
             //1st row = Header
             //2nd row = 1st data row
             for (int row = 0; row < rowCount - 1; row++)

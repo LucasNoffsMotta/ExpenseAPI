@@ -29,3 +29,6 @@ Content-Type: application/json
 {
   "dataFile" : "C://Users//PICHAU//Desktop//ExcelExpenses//Expenses.xlsx"
 }
+
+###
+POST  http://localhost:5239/api/excel/dataReport
