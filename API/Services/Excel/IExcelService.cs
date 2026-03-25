@@ -7,7 +7,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 {
     public interface IExcelService
     {
-        public string SaveDataIntoExcelSheet(List<SummaryExpenseDTO> _expenses);
+        public string SaveDataIntoExcelSheet(IXLWorkbook book, IXLWorksheet sheet, List<SummaryExpenseDTO> _expenses);
 
         public DataTable InitiateDataTable(PropertyInfo[] dataProps);
 

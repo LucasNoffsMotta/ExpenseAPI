@@ -1,10 +1,11 @@
 ﻿using ClosedXML.Excel;
-using System.IO;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Mvc;
+using System.IO;
+using UnitTests_ExpenseAPI.DTO.ExcelDTO;
+using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 using UnitTests_ExpenseAPI.Services.Excel;
 using UnitTests_ExpenseAPI.Services.Expense;
-using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
-using UnitTests_ExpenseAPI.DTO.ExcelDTO;
 
 namespace UnitTests_ExpenseAPI.Controllers
 {
@@ -25,7 +26,9 @@ namespace UnitTests_ExpenseAPI.Controllers
         public async Task<IActionResult> CreateExcelTable()
         {
             var expenses = await _expenseService.GetAll();
-            string tablePath = _excelService.SaveDataIntoExcelSheet(expenses);
+            var workBook = new XLWorkbook();
+            var workSheet = workBook.Worksheets.Add("main_sheet");
+            string tablePath = _excelService.SaveDataIntoExcelSheet(workBook, workSheet, expenses);
             return tablePath != string.Empty ? Ok($"New table created at: {tablePath}") : BadRequest($"Table wasnt created: {tablePath}");
         }
 
@@ -40,9 +43,9 @@ namespace UnitTests_ExpenseAPI.Controllers
                 await _excelService.CreateMonthTable(book, expenses);
             }
 
-            catch
+            catch(Exception ex)
             {
-
+                return BadRequest(ex.Message);
             }
 
             return Ok();
