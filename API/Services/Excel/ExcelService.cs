@@ -2,6 +2,8 @@
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using DocumentFormat.OpenXml.Office2010.PowerPoint;
 using DocumentFormat.OpenXml.Spreadsheet;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Reflection;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
@@ -21,11 +23,11 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
         //TODO:
         //Adaptar este metodo para que apenas adicione abas em um workbook, e retorne este workbook!
-        public string SaveDataIntoExcelSheet(IXLWorkbook book, IXLWorksheet sheet, List<SummaryExpenseDTO> _expenses)
+        public IXLWorkbook? SaveDataIntoExcelSheet(IXLWorkbook book, IXLWorksheet sheet, List<SummaryExpenseDTO> _expenses)
         {
             try
             {
-                if (_expenses.Count == 0) return string.Empty;
+                if (_expenses.Count == 0) return null;
 
                 Type type = typeof(SummaryExpenseDTO);
                 var columnHeaders = type.GetProperties();
@@ -57,16 +59,13 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                         sheet.Cell(i + 2, j + 1).Value = obj.ToString();
                     }
                 }
-
-                book.SaveAs(filepath);
             }
 
             catch(Exception ex)
             {
-                return string.Empty;
+                return null;
             }
-          
-            return filepath;
+            return book;
         }
 
         //Here map from expense to month
@@ -112,8 +111,6 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
                 }
             }
-
-
 
         }
 
