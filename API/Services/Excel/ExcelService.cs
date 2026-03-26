@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
+using DocumentFormat.OpenXml.Office2010.PowerPoint;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System.Data;
 using System.Reflection;
@@ -18,7 +19,9 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             this.categoryService = categoryService;
         }
 
-        public string SaveDataIntoExcelSheet(List<SummaryExpenseDTO> _expenses)
+        //TODO:
+        //Adaptar este metodo para que apenas adicione abas em um workbook, e retorne este workbook!
+        public string SaveDataIntoExcelSheet(IXLWorkbook book, IXLWorksheet sheet, List<SummaryExpenseDTO> _expenses)
         {
             try
             {
@@ -28,8 +31,6 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 var columnHeaders = type.GetProperties();
                 int tableColumnsRange = columnHeaders.Length;
 
-                var workBook = new XLWorkbook();
-                var workSheet = workBook.Worksheets.Add("main_sheet");
                 DataTable table = InitiateDataTable(columnHeaders);
 
                 //TODO: Abstrair isso para tipos genericos
@@ -41,10 +42,10 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 //Insert headers on excel sheet
                 for (int i = 0; i < table.Columns.Count; i++)
                 {
-                    workSheet.Cell(1, i + 1).Value = table.Columns[i].ColumnName;
-                    workSheet.Cell(1, i + 1).Style.Font.Bold = true;
-                    workSheet.Cell(1, i + 1).Style.Font.FontSize = 16;
-                    workSheet.Column(i + 1).Width = 15;
+                    sheet.Cell(1, i + 1).Value = table.Columns[i].ColumnName;
+                    sheet.Cell(1, i + 1).Style.Font.Bold = true;
+                    sheet.Cell(1, i + 1).Style.Font.FontSize = 16;
+                    sheet.Column(i + 1).Width = 15;
                 }
 
                 //Insert Data
@@ -53,22 +54,23 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                     for (int j = 0; j < table.Columns.Count; j++)
                     {
                         var obj = table.Rows[i][j];
-                        workSheet.Cell(i + 2, j + 1).Value = obj.ToString();
+                        sheet.Cell(i + 2, j + 1).Value = obj.ToString();
                     }
                 }
 
-                workBook.SaveAs(filepath);
+                book.SaveAs(filepath);
             }
 
             catch(Exception ex)
             {
-                return ex.Message;
+                return string.Empty;
             }
           
             return filepath;
         }
 
         //Here map from expense to month
+        //Ignoring the year here...
         public async Task CreateMonthTable(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
         {
             IXLWorksheet[] sheets = new IXLWorksheet[12];
@@ -79,26 +81,58 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             //Table map: month / table
 
             for (int i = 1; i < 13; i++)
-            {
+            {        
                 DateOnly date = new DateOnly(2025, i, 1);
-                var sheet = workBook.AddWorksheet(date.Month.ToString("MMM"));
-                monthTableMap[date.Month.ToString("MMM")] = sheet;
+                string sheetTitle = date.ToString("MMM");
+                var sheet = workBook.AddWorksheet(sheetTitle);
+                monthTableMap[sheetTitle] = sheet;
             }
 
-            foreach(var expense in _expenses)
+            foreach(SummaryExpenseDTO expense in _expenses)
             {
-                monthDtoMap[expense.Date!.Month.ToString("MMM")].Add(expense);
+                var key = expense.Date!.Value.ToString("MMM");
+
+                if (monthDtoMap.ContainsKey(key))
+                {
+                    monthDtoMap[key].Add(expense);
+                }
+
+                else
+                {
+                    List<SummaryExpenseDTO> dtoList = new List<SummaryExpenseDTO>();
+                    dtoList.Add(expense);
+                    monthDtoMap[key] = dtoList;
+                }
             }
-            //Aqui ja tenho um dicionario com os dtos separados por mes..
+
+            foreach(KeyValuePair<string, List<SummaryExpenseDTO>> mapItem in monthDtoMap)
+            {
+                foreach(var dto in mapItem.Value)
+                {
+
+                }
+            }
+
+
 
         }
+
 
         public DataTable InitiateDataTable(PropertyInfo[] dataProps)
         {
             DataTable table = new DataTable();
             foreach(var prop in dataProps)
             {
-                table.Columns.Add(prop.Name, prop.PropertyType);
+                try
+                {
+                    table.Columns.Add(prop.Name, prop.PropertyType);
+                }
+
+                catch(NotSupportedException)
+                {
+                    table.Columns.Add(prop.Name, typeof(string));
+                }
+          
             }
 
             return table;
