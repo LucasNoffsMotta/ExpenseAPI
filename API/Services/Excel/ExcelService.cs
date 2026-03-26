@@ -12,8 +12,6 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 {
     public class ExcelService : IExcelService
     {
-        const string filepath = @"C:\\Users\\PICHAU\\Desktop\\ExcelExpenses/Expenses.xlsx";
-
         private ICategoryService categoryService;
 
         public ExcelService(ICategoryService categoryService)
@@ -21,13 +19,11 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             this.categoryService = categoryService;
         }
 
-        //TODO:
-        //Adaptar este metodo para que apenas adicione abas em um workbook, e retorne este workbook!
-        public IXLWorkbook? SaveDataIntoExcelSheet(IXLWorkbook book, IXLWorksheet sheet, List<SummaryExpenseDTO> _expenses)
+        public IXLWorksheet? SaveDataIntoExcelSheet(IXLWorksheet sheet, List<SummaryExpenseDTO>? _expenses)
         {
             try
             {
-                if (_expenses.Count == 0) return null;
+                if (_expenses?.Count == 0 || _expenses == null) return null;
 
                 Type type = typeof(SummaryExpenseDTO);
                 var columnHeaders = type.GetProperties();
@@ -35,13 +31,13 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
                 DataTable table = InitiateDataTable(columnHeaders);
 
-                //TODO: Abstrair isso para tipos genericos
-                foreach (var expense in _expenses)
+                foreach (var expense in _expenses!)
                 {
                     table.Rows.Add(expense.ID, expense.Description, expense.Value, expense.Date.ToString());
                 }
 
-                //Insert headers on excel sheet
+                #region Headers
+                
                 for (int i = 0; i < table.Columns.Count; i++)
                 {
                     sheet.Cell(1, i + 1).Value = table.Columns[i].ColumnName;
@@ -49,8 +45,9 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                     sheet.Cell(1, i + 1).Style.Font.FontSize = 16;
                     sheet.Column(i + 1).Width = 15;
                 }
+                #endregion
 
-                //Insert Data
+                #region Data
                 for (int i = 0; i < table.Rows.Count; i++)
                 {
                     for (int j = 0; j < table.Columns.Count; j++)
@@ -59,18 +56,19 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                         sheet.Cell(i + 2, j + 1).Value = obj.ToString();
                     }
                 }
+                #endregion
             }
 
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return null;
             }
-            return book;
+            return sheet;
         }
 
         //Here map from expense to month
         //Ignoring the year here...
-        public async Task CreateMonthTable(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
+        public async Task<XLWorkbook> CreateMonthTable(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
         {
             IXLWorksheet[] sheets = new IXLWorksheet[12];
             Dictionary<string, IXLWorksheet> monthTableMap = new Dictionary<string, IXLWorksheet>();
@@ -108,10 +106,13 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             {
                 foreach(var dto in mapItem.Value)
                 {
-
+                    var sheet = monthTableMap[mapItem.Key];
+                    sheet = SaveDataIntoExcelSheet(sheet, mapItem.Value);
+                    monthTableMap[mapItem.Key] = sheet!;
                 }
             }
 
+            return workBook;
         }
 
 

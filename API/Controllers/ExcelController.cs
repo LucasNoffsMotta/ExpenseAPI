@@ -15,21 +15,25 @@ namespace UnitTests_ExpenseAPI.Controllers
     {
         private IExpenseService _expenseService;
         private IExcelService _excelService;
+        private IConfiguration _config;
 
-        public ExcelController(IExpenseService expenseService, IExcelService excelService)
+        public ExcelController(IExpenseService expenseService, IExcelService excelService, IConfiguration config)
         {
             _expenseService = expenseService;
             _excelService = excelService;
+            _config = config; 
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateExcelTable()
         {
+      
             var expenses = await _expenseService.GetAll();
             var workBook = new XLWorkbook();
             var workSheet = workBook.Worksheets.Add("main_sheet");
-            string tablePath = _excelService.SaveDataIntoExcelSheet(workBook, workSheet, expenses);
-            return tablePath != string.Empty ? Ok($"New table created at: {tablePath}") : BadRequest($"Table wasnt created: {tablePath}");
+            workSheet =  _excelService.SaveDataIntoExcelSheet(workSheet, expenses);
+            workBook.SaveAs(_config.GetSection("BasicReportFilePath").Value);   
+            return workSheet != null ? Ok($"New table created") : BadRequest($"Table wasnt created");
         }
 
         [HttpPost("dataReport")]
@@ -40,7 +44,8 @@ namespace UnitTests_ExpenseAPI.Controllers
 
             try
             {
-                await _excelService.CreateMonthTable(book, expenses);
+                book = await _excelService.CreateMonthTable(book, expenses);
+                book.SaveAs(_config.GetSection("FullReportFilePath").Value);
             }
 
             catch(Exception ex)

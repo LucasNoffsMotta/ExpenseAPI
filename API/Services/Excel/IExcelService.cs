@@ -8,12 +8,12 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 {
     public interface IExcelService
     {
-        public IXLWorkbook? SaveDataIntoExcelSheet(IXLWorkbook book, IXLWorksheet sheet, List<SummaryExpenseDTO> _expenses);
+        public IXLWorksheet? SaveDataIntoExcelSheet(IXLWorksheet sheet, List<SummaryExpenseDTO>? _expenses);
 
         public DataTable InitiateDataTable(PropertyInfo[] dataProps);
 
         public Task<List<CreateExpenseDTO>> GetObjectsFromExcel(XLWorkbook excelData, Type baseModel);
 
-        public Task CreateMonthTable(XLWorkbook excelData, List<SummaryExpenseDTO> _expenses);
+        public Task<XLWorkbook> CreateMonthTable(XLWorkbook excelData, List<SummaryExpenseDTO> _expenses);
     }
 }
