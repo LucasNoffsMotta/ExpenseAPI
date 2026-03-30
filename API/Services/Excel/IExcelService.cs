@@ -10,7 +10,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
     {
         public IXLWorksheet? SaveDataIntoExcelSheet(IXLWorksheet sheet, List<SummaryExpenseDTO>? _expenses);
 
-        public DataTable InitiateDataTable(PropertyInfo[] dataProps);
+        public DataTable InitiateDataTable(PropertyInfo[] dataProps, string[] columnsToIgnore);
 
         public Task<List<CreateExpenseDTO>> GetObjectsFromExcel(XLWorkbook excelData, Type baseModel);
 

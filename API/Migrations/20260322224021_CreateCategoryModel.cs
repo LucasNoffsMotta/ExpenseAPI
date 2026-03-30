@@ -13,7 +13,7 @@ namespace UnitTests_ExpenseAPI.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Description",
+                name: "Descricao",
                 table: "Expenses");
 
             migrationBuilder.AddColumn<int>(
@@ -39,7 +39,7 @@ namespace UnitTests_ExpenseAPI.Migrations
 
             migrationBuilder.InsertData(
                 table: "Category",
-                columns: new[] { "ID", "Description", "HexadecimalColor" },
+                columns: new[] { "ID", "Descricao", "HexadecimalColor" },
                 values: new object[,]
                 {
                     { 1, "Ifood", "#FF0000" },
@@ -93,7 +93,7 @@ namespace UnitTests_ExpenseAPI.Migrations
                 table: "Expenses");
 
             migrationBuilder.AddColumn<string>(
-                name: "Description",
+                name: "Descricao",
                 table: "Expenses",
                 type: "TEXT",
                 nullable: true);
@@ -102,14 +102,14 @@ namespace UnitTests_ExpenseAPI.Migrations
                 table: "Expenses",
                 keyColumn: "ID",
                 keyValue: 1,
-                column: "Description",
+                column: "Descricao",
                 value: null);
 
             migrationBuilder.UpdateData(
                 table: "Expenses",
                 keyColumn: "ID",
                 keyValue: 2,
-                column: "Description",
+                column: "Descricao",
                 value: "Hamburguer");
         }
     }

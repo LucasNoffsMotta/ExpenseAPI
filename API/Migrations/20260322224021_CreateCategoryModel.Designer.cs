@@ -29,10 +29,10 @@ namespace UnitTests_ExpenseAPI.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateOnly>("Date")
+                    b.Property<DateOnly>("Data")
                         .HasColumnType("TEXT");
 
-                    b.Property<decimal>("Value")
+                    b.Property<decimal>("Valor")
                         .HasColumnType("TEXT");
 
                     b.HasKey("ID");
@@ -64,7 +64,7 @@ namespace UnitTests_ExpenseAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Description")
+                    b.Property<string>("Descricao")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("HexadecimalColor")

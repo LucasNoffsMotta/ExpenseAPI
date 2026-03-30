@@ -101,7 +101,7 @@ public class EspenseControllerTest
         {
             var okResult = Assert.IsType<OkObjectResult>(result);
             var item = Assert.IsType<SummaryExpenseDTO>(okResult.Value);
-            Assert.Equal((models.Where(m => m.ID == id).First()).Value, item.Value);
+            Assert.Equal((models.Where(m => m.ID == id).First()).Value, item.Valor);
         }
 
         else

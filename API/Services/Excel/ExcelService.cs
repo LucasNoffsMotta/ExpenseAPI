@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using DocumentFormat.OpenXml.Office2010.PowerPoint;
 using DocumentFormat.OpenXml.Spreadsheet;
@@ -21,6 +22,10 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
         public IXLWorksheet? SaveDataIntoExcelSheet(IXLWorksheet sheet, List<SummaryExpenseDTO>? _expenses)
         {
+            //Temp:
+            string[] columnsToIgnoreOnDataTable = { "ID" };
+            string[] columnsToIgnoreOnExcel = { "ID", "Color" };
+
             try
             {
                 if (_expenses?.Count == 0 || _expenses == null) return null;
@@ -29,21 +34,27 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 var columnHeaders = type.GetProperties();
                 int tableColumnsRange = columnHeaders.Length;
 
-                DataTable table = InitiateDataTable(columnHeaders);
+                DataTable table = InitiateDataTable(columnHeaders, columnsToIgnoreOnDataTable);
 
-                foreach (var expense in _expenses!)
+
+                for (int row = 0; row < _expenses.Count; row++)
                 {
-                    table.Rows.Add(expense.ID, expense.Description, expense.Value, expense.Date.ToString());
+                    var expense = _expenses[row];
+                    table.Rows.Add(expense.Descricao, expense.Valor, expense.Data.ToString(), expense.Color);  
                 }
 
-                #region Headers
-                
+                #region Headers               
                 for (int i = 0; i < table.Columns.Count; i++)
                 {
-                    sheet.Cell(1, i + 1).Value = table.Columns[i].ColumnName;
-                    sheet.Cell(1, i + 1).Style.Font.Bold = true;
-                    sheet.Cell(1, i + 1).Style.Font.FontSize = 16;
-                    sheet.Column(i + 1).Width = 15;
+                    bool ignore = columnsToIgnoreOnExcel.Any(e => e == table.Columns[i].ColumnName);
+
+                    if (!ignore)
+                    {
+                        sheet.Cell(1, i + 1).Value = table.Columns[i].ColumnName;
+                        sheet.Cell(1, i + 1).Style.Font.Bold = true;
+                        sheet.Cell(1, i + 1).Style.Font.FontSize = 16;
+                        sheet.Column(i + 1).Width = 15;
+                    }
                 }
                 #endregion
 
@@ -53,29 +64,53 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                     for (int j = 0; j < table.Columns.Count; j++)
                     {
                         var obj = table.Rows[i][j];
-                        sheet.Cell(i + 2, j + 1).Value = obj.ToString();
+
+                        if (!table.Columns[j].ColumnName.Equals("Color"))
+                        {
+                            Type columnType = table.Columns[j].DataType;
+                            
+
+                            if (columnType == typeof(decimal))
+                            {
+                                sheet.Cell(i + 2, j + 1).Value = (decimal)obj;
+                                sheet.Cell(i + 2, j + 1).Style.NumberFormat.Format = "R$#,##0.00";
+                            }
+
+                            else
+                            {
+                                sheet.Cell(i + 2, j + 1).Value = (string)obj;
+                            }
+                        }
+
+                        else
+                        {
+                            string color = obj.ToString();
+                            sheet.Row(i + 2).Style.Fill.BackgroundColor = XLColor.FromHtml(color);
+                        }
                     }
                 }
                 #endregion
+
+                int lastRow = table.Rows.Count + 1;
+                sheet.Cell(lastRow + 1, 1).Value = "Total";
+                sheet.Cell(lastRow + 1, 1).Style.Font.Bold = true;
+                sheet.Cell(lastRow + 1, 2).Style.NumberFormat.Format = "R$#,##0.00";
+                sheet.Cell(lastRow + 1, 2).FormulaA1 = $"SUM(B2:B{lastRow})";
             }
 
             catch (Exception ex)
             {
-                return null;
+                throw new Exception(ex.Message);
             }
             return sheet;
         }
 
-        //Here map from expense to month
         //Ignoring the year here...
         public async Task<XLWorkbook> CreateMonthTable(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
         {
             IXLWorksheet[] sheets = new IXLWorksheet[12];
             Dictionary<string, IXLWorksheet> monthTableMap = new Dictionary<string, IXLWorksheet>();
             Dictionary<string, List<SummaryExpenseDTO>> monthDtoMap = new Dictionary<string, List<SummaryExpenseDTO>>();
-
-            //Gather all data for each month, and then just trhow on the table!
-            //Table map: month / table
 
             for (int i = 1; i < 13; i++)
             {        
@@ -87,7 +122,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
             foreach(SummaryExpenseDTO expense in _expenses)
             {
-                var key = expense.Date!.Value.ToString("MMM");
+                var key = expense.Data!.Value.ToString("MMM");
 
                 if (monthDtoMap.ContainsKey(key))
                 {
@@ -102,35 +137,38 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 }
             }
 
+
             foreach(KeyValuePair<string, List<SummaryExpenseDTO>> mapItem in monthDtoMap)
             {
-                foreach(var dto in mapItem.Value)
-                {
-                    var sheet = monthTableMap[mapItem.Key];
-                    sheet = SaveDataIntoExcelSheet(sheet, mapItem.Value);
-                    monthTableMap[mapItem.Key] = sheet!;
-                }
+                var sheet = monthTableMap[mapItem.Key];
+                sheet = SaveDataIntoExcelSheet(sheet, mapItem.Value);
+                monthTableMap[mapItem.Key] = sheet!;
             }
 
             return workBook;
         }
 
 
-        public DataTable InitiateDataTable(PropertyInfo[] dataProps)
+        public DataTable InitiateDataTable(PropertyInfo[] dataProps, string[] columnsToIgnore)
         {
             DataTable table = new DataTable();
+
             foreach(var prop in dataProps)
             {
                 try
                 {
-                    table.Columns.Add(prop.Name, prop.PropertyType);
+                    bool ignoreProp = columnsToIgnore.Any(e => e == prop.Name);
+
+                    if (!ignoreProp)
+                    {
+                        table.Columns.Add(prop.Name, prop.PropertyType);
+                    }       
                 }
 
                 catch(NotSupportedException)
                 {
                     table.Columns.Add(prop.Name, typeof(string));
                 }
-          
             }
 
             return table;

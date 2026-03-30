@@ -16,6 +16,6 @@ public static class ExpenseMappings
     }
     public static SummaryExpenseDTO ExpenseModelToSummaryDTO(Expense model)
     {
-        return new SummaryExpenseDTO(model.ID, model.Category!.Description, model.Value, model.Date);
+        return new SummaryExpenseDTO(model.ID, model.Category!.Description, model.Value, model.Date, model.Category.HexadecimalColor);
     }
 }

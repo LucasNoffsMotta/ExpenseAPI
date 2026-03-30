@@ -30,7 +30,7 @@ namespace UnitTests_ExpenseAPI.Migrations
 
             migrationBuilder.InsertData(
                 table: "Expenses",
-                columns: new[] { "ID", "Date", "Description", "Value" },
+                columns: new[] { "ID", "Data", "Descricao", "Valor" },
                 values: new object[,]
                 {
                     { 1, new DateOnly(9999, 12, 31), null, 10.0m },
