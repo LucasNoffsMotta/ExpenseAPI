@@ -1,3 +1,4 @@
+using System.Data;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 
 namespace UnitTests_ExpenseAPI.Services.Expense;
@@ -11,6 +12,5 @@ public interface IExpenseService
     public Task<bool> DeleteByID(int id);
 
     public Task<bool> Create(CreateExpenseDTO model);
-
 }
 

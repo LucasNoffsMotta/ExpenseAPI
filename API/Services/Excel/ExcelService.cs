@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using DocumentFormat.OpenXml.Office2010.PowerPoint;
@@ -24,103 +25,48 @@ namespace UnitTests_ExpenseAPI.Services.Excel
         {
             //Temp:
             string[] columnsToIgnoreOnDataTable = { "ID" };
-            string[] columnsToIgnoreOnExcel = { "ID", "Color" };
+   
+            if (_expenses?.Count == 0 || _expenses == null) return null;
 
-            try
+            Type type = typeof(SummaryExpenseDTO);
+            var columnHeaders = type.GetProperties();
+            int tableColumnsRange = columnHeaders.Length;
+
+            DataTable table = InitiateDataTable(columnHeaders, columnsToIgnoreOnDataTable);
+
+
+            for (int row = 0; row < _expenses.Count; row++)
             {
-                if (_expenses?.Count == 0 || _expenses == null) return null;
-
-                Type type = typeof(SummaryExpenseDTO);
-                var columnHeaders = type.GetProperties();
-                int tableColumnsRange = columnHeaders.Length;
-
-                DataTable table = InitiateDataTable(columnHeaders, columnsToIgnoreOnDataTable);
-
-
-                for (int row = 0; row < _expenses.Count; row++)
-                {
-                    var expense = _expenses[row];
-                    table.Rows.Add(expense.Descricao, expense.Valor, expense.Data.ToString(), expense.Color);  
-                }
-
-                #region Headers               
-                for (int i = 0; i < table.Columns.Count; i++)
-                {
-                    bool ignore = columnsToIgnoreOnExcel.Any(e => e == table.Columns[i].ColumnName);
-
-                    if (!ignore)
-                    {
-                        sheet.Cell(1, i + 1).Value = table.Columns[i].ColumnName;
-                        sheet.Cell(1, i + 1).Style.Font.Bold = true;
-                        sheet.Cell(1, i + 1).Style.Font.FontSize = 16;
-                        sheet.Column(i + 1).Width = 15;
-                    }
-                }
-                #endregion
-
-                #region Data
-                for (int i = 0; i < table.Rows.Count; i++)
-                {
-                    for (int j = 0; j < table.Columns.Count; j++)
-                    {
-                        var obj = table.Rows[i][j];
-
-                        if (!table.Columns[j].ColumnName.Equals("Color"))
-                        {
-                            Type columnType = table.Columns[j].DataType;
-                            
-
-                            if (columnType == typeof(decimal))
-                            {
-                                sheet.Cell(i + 2, j + 1).Value = (decimal)obj;
-                                sheet.Cell(i + 2, j + 1).Style.NumberFormat.Format = "R$#,##0.00";
-                            }
-
-                            else
-                            {
-                                sheet.Cell(i + 2, j + 1).Value = (string)obj;
-                            }
-                        }
-
-                        else
-                        {
-                            string color = obj.ToString();
-                            sheet.Row(i + 2).Style.Fill.BackgroundColor = XLColor.FromHtml(color);
-                        }
-                    }
-                }
-                #endregion
-
-                int lastRow = table.Rows.Count + 1;
-                sheet.Cell(lastRow + 1, 1).Value = "Total";
-                sheet.Cell(lastRow + 1, 1).Style.Font.Bold = true;
-                sheet.Cell(lastRow + 1, 2).Style.NumberFormat.Format = "R$#,##0.00";
-                sheet.Cell(lastRow + 1, 2).FormulaA1 = $"SUM(B2:B{lastRow})";
+                var expense = _expenses[row];
+                table.Rows.Add(expense.Descricao, expense.Valor, expense.Data.ToString(), expense.Color);
             }
 
-            catch (Exception ex)
+            if (table.Rows.Count == 0)
             {
-                throw new Exception(ex.Message);
+                table.Rows.Add("Nenhuma", 0.0m, "xx/xx/xx", "#FFFFFF");
             }
+
+            sheet = CreateExcelSheetUsingDataTable(table, sheet);
+
             return sheet;
         }
 
         //Ignoring the year here...
-        public async Task<XLWorkbook> CreateMonthTable(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
+        public async Task<XLWorkbook> CreateYearReport(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
         {
             IXLWorksheet[] sheets = new IXLWorksheet[12];
             Dictionary<string, IXLWorksheet> monthTableMap = new Dictionary<string, IXLWorksheet>();
             Dictionary<string, List<SummaryExpenseDTO>> monthDtoMap = new Dictionary<string, List<SummaryExpenseDTO>>();
 
             for (int i = 1; i < 13; i++)
-            {        
+            {
                 DateOnly date = new DateOnly(2025, i, 1);
                 string sheetTitle = date.ToString("MMM");
-                var sheet = workBook.AddWorksheet(sheetTitle);
-                monthTableMap[sheetTitle] = sheet;
+                var monthSheet = workBook.AddWorksheet(sheetTitle);
+                monthTableMap[sheetTitle] = monthSheet;
             }
 
-            foreach(SummaryExpenseDTO expense in _expenses)
+            foreach (SummaryExpenseDTO expense in _expenses)
             {
                 var key = expense.Data!.Value.ToString("MMM");
 
@@ -138,13 +84,33 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             }
 
 
-            foreach(KeyValuePair<string, List<SummaryExpenseDTO>> mapItem in monthDtoMap)
+            foreach (KeyValuePair<string, List<SummaryExpenseDTO>> mapItem in monthDtoMap)
             {
-                var sheet = monthTableMap[mapItem.Key];
-                sheet = SaveDataIntoExcelSheet(sheet, mapItem.Value);
-                monthTableMap[mapItem.Key] = sheet!;
+                var monthSheet = monthTableMap[mapItem.Key];
+                monthSheet = SaveDataIntoExcelSheet(monthSheet, mapItem.Value);
+                monthTableMap[mapItem.Key] = monthSheet!;
             }
 
+            DataTable yearDataTable = new DataTable();
+
+            yearDataTable.Columns.Add("Mes", typeof(string));
+            yearDataTable.Columns.Add("Total gasto", typeof(object));
+
+            foreach (KeyValuePair<string, IXLWorksheet> monthSheet in monthTableMap)
+            {
+                string month = monthSheet.Key;
+                var totalCell = monthSheet.Value.LastCellUsed();
+                string formula = $"={monthSheet.Value.Name}!Total_{month}";
+                yearDataTable.Rows.Add(monthSheet.Key, formula);
+            }
+
+            var reportSheet = workBook.AddWorksheet("Report");
+            reportSheet.Cell(1, 1).InsertTable(yearDataTable);
+            reportSheet.Column(1).Width = 10.0;
+            reportSheet.Column(2).Width = 10.0;
+            reportSheet.RecalculateAllFormulas();
+            workBook.CalculateMode = XLCalculateMode.Auto;
+            workBook.RecalculateAllFormulas();
             return workBook;
         }
 
@@ -153,7 +119,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
         {
             DataTable table = new DataTable();
 
-            foreach(var prop in dataProps)
+            foreach (var prop in dataProps)
             {
                 try
                 {
@@ -162,10 +128,10 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                     if (!ignoreProp)
                     {
                         table.Columns.Add(prop.Name, prop.PropertyType);
-                    }       
+                    }
                 }
 
-                catch(NotSupportedException)
+                catch (NotSupportedException)
                 {
                     table.Columns.Add(prop.Name, typeof(string));
                 }
@@ -205,5 +171,95 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
             return expenses;
         }
-    }
+
+        public IXLWorksheet CreateExcelSheetUsingDataTable(DataTable table, IXLWorksheet sheet)
+        {
+            string[] columnsToIgnoreOnExcel = { "ID", "Color" };
+
+            try
+            {
+                #region Insert Headers     
+                
+                for (int i = 0; i < table.Columns.Count; i++)
+                {
+                    bool ignore = columnsToIgnoreOnExcel.Any(e => e == table.Columns[i].ColumnName);
+
+                    if (!ignore)
+                    {
+                        sheet.Cell(1, i + 1).Value = table.Columns[i].ColumnName;
+                        sheet.Cell(1, i + 1).Style.Font.Bold = true;
+                        sheet.Cell(1, i + 1).Style.Font.FontSize = 16;
+                        sheet.Row(1).Style.Fill.SetBackgroundColor(XLColor.AshGrey);
+                        sheet.Column(i + 1).Width = 15;
+                    }
+                }
+                #endregion
+
+                #region Insert Data
+
+                for (int i = 0; i < table.Rows.Count; i++)
+                {
+                    for (int j = 0; j < table.Columns.Count; j++)
+                    {
+                        var obj = table.Rows[i][j];
+
+                        if (!table.Columns[j].ColumnName.Equals("Color"))
+                        {
+                            Type columnType = table.Columns[j].DataType;
+
+
+                            if (columnType == typeof(decimal))
+                            {
+                                sheet.Cell(i + 2, j + 1).Value = (decimal)obj;
+                                sheet.Cell(i + 2, j + 1).Style.NumberFormat.Format = "R$#,##0.00";
+                            }
+
+                            else
+                            {
+                                sheet.Cell(i + 2, j + 1).Value = (string)obj;
+                            }
+                        }
+
+                        else
+                        {
+                            string color = obj.ToString()!;
+                            sheet.Row(i + 2).Style.Fill.BackgroundColor = XLColor.FromHtml(color);
+                        }
+                    }
+                }
+                #endregion
+
+                sheet = InsertSumOnColumn(sheet, sheet.LastRowUsed()!.RowNumber(), 2);
+            }
+
+
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
+            return sheet;
+
+        }
+
+        public IXLWorksheet InsertSumOnColumn(IXLWorksheet sheet, int lastRow, int column)
+        {
+            int newRow = lastRow + 1;
+            int sumColumn = column;
+            int descriptionColumn = column - 1;
+
+
+            sheet.Cell(newRow, descriptionColumn).Value = "Total";
+            sheet.Cell(newRow, descriptionColumn).Style.Font.Bold = true;
+            sheet.Cell(newRow, sumColumn).Style.NumberFormat.Format = "R$#,##0.00";
+            sheet.Cell(newRow, sumColumn).FormulaA1 = $"SUM(B2:B{lastRow})";
+
+            var totalCell = sheet.Cell(newRow, sumColumn);
+
+            string namedRange = $"Total_{sheet.Name}";
+            sheet.Workbook.DefinedNames.Add(namedRange, totalCell.AsRange());
+
+            return sheet;
+        }
+    } 
 }

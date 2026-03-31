@@ -44,7 +44,7 @@ namespace UnitTests_ExpenseAPI.Controllers
 
             try
             {
-                book = await _excelService.CreateMonthTable(book, expenses);
+                book = await _excelService.CreateYearReport(book, expenses);
                 book.SaveAs(_config.GetSection("FullReportFilePath").Value);
             }
 
