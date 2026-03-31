@@ -64,6 +64,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 string sheetTitle = date.ToString("MMM");
                 var monthSheet = workBook.AddWorksheet(sheetTitle);
                 monthTableMap[sheetTitle] = monthSheet;
+
             }
 
             foreach (SummaryExpenseDTO expense in _expenses)
@@ -83,7 +84,6 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 }
             }
 
-
             foreach (KeyValuePair<string, List<SummaryExpenseDTO>> mapItem in monthDtoMap)
             {
                 var monthSheet = monthTableMap[mapItem.Key];
@@ -91,21 +91,19 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 monthTableMap[mapItem.Key] = monthSheet!;
             }
 
-            DataTable yearDataTable = new DataTable();
+            var reportSheet = workBook.AddWorksheet("Report");
+            int row = 2;
 
-            yearDataTable.Columns.Add("Mes", typeof(string));
-            yearDataTable.Columns.Add("Total gasto", typeof(object));
+            reportSheet.Cell(1, 1).Value = "Mes";
+            reportSheet.Cell(1, 2).Value = "Total gasto";
 
-            foreach (KeyValuePair<string, IXLWorksheet> monthSheet in monthTableMap)
+            foreach (var item in monthTableMap)
             {
-                string month = monthSheet.Key;
-                var totalCell = monthSheet.Value.LastCellUsed();
-                string formula = $"={monthSheet.Value.Name}!Total_{month}";
-                yearDataTable.Rows.Add(monthSheet.Key, formula);
+                reportSheet.Cell(row, 1).Value = item.Key;
+                reportSheet.Cell(row, 2).FormulaA1 = $"=Total_{item.Key}";
+                row++;
             }
 
-            var reportSheet = workBook.AddWorksheet("Report");
-            reportSheet.Cell(1, 1).InsertTable(yearDataTable);
             reportSheet.Column(1).Width = 10.0;
             reportSheet.Column(2).Width = 10.0;
             reportSheet.RecalculateAllFormulas();
