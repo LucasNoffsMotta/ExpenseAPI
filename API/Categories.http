@@ -1,0 +1,16 @@
+###
+POST http://localhost:5239/api/category
+Content-Type: application/json
+
+{
+  "Description":"Maquiagem",
+  "HexadecimalColor": "#c983ac"
+}
+
+###
+GET http://localhost:5239/api/category
+
+
+
+###
+POST http://localhost:5239/api/category/delete/5

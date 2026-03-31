@@ -3,6 +3,7 @@ using DocumentFormat.OpenXml.Bibliography;
 using DocumentFormat.OpenXml.Drawing;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using DocumentFormat.OpenXml.Office2010.PowerPoint;
+using DocumentFormat.OpenXml.Office2016.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -92,17 +93,27 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             }
 
             var reportSheet = workBook.AddWorksheet("Report");
+
             int row = 2;
-
-            reportSheet.Cell(1, 1).Value = "Mes";
-            reportSheet.Cell(1, 2).Value = "Total gasto";
-
+         
             foreach (var item in monthTableMap)
             {
                 reportSheet.Cell(row, 1).Value = item.Key;
                 reportSheet.Cell(row, 2).FormulaA1 = $"=Total_{item.Key}";
+                reportSheet.Cell(row, 2).Style.NumberFormat.Format = "R$#,##0.00";
                 row++;
             }
+
+            reportSheet = InsertSumOnColumn(reportSheet, reportSheet.LastRowUsed()!.RowNumber(), 2);
+            reportSheet.Columns().AdjustToContents();
+
+            reportSheet.LastCell();
+
+            reportSheet.Cell(1, 1).Value = "Mes";
+            reportSheet.Cell(1, 1).Style.Font.Bold = true;
+
+            reportSheet.Cell(1, 2).Value = "Total gasto";
+            reportSheet.Cell(1, 2).Style.Font.Bold = true;
 
             reportSheet.Column(1).Width = 10.0;
             reportSheet.Column(2).Width = 10.0;
