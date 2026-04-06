@@ -19,7 +19,8 @@ namespace UnitTests_ExpenseAPI.Mapping
             return new SumaryCategoryDTO
             {
                 ID = model.ID,
-                Description = model.Description
+                Description = model.Description,
+                HexadecimalColor = model.HexadecimalColor
             };
         }
     }

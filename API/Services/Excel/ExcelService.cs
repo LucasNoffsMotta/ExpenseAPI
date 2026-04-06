@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using System.Reflection;
+using UnitTests_ExpenseAPI.DTO.CategoryDTO;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 using UnitTests_ExpenseAPI.Services.Categories;
 namespace UnitTests_ExpenseAPI.Services.Excel
@@ -92,34 +93,9 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 monthTableMap[mapItem.Key] = monthSheet!;
             }
 
-            var reportSheet = workBook.AddWorksheet("Report");
+            workBook = InsertFullYearSheet(workBook, monthTableMap);
+            await InsertCategoryReportSheet(workBook);
 
-            int row = 2;
-         
-            foreach (var item in monthTableMap)
-            {
-                reportSheet.Cell(row, 1).Value = item.Key;
-                reportSheet.Cell(row, 2).FormulaA1 = $"=Total_{item.Key}";
-                reportSheet.Cell(row, 2).Style.NumberFormat.Format = "R$#,##0.00";
-                row++;
-            }
-
-            reportSheet = InsertSumOnColumn(reportSheet, reportSheet.LastRowUsed()!.RowNumber(), 2);
-            reportSheet.Columns().AdjustToContents();
-
-            reportSheet.LastCell();
-
-            reportSheet.Cell(1, 1).Value = "Mes";
-            reportSheet.Cell(1, 1).Style.Font.Bold = true;
-
-            reportSheet.Cell(1, 2).Value = "Total gasto";
-            reportSheet.Cell(1, 2).Style.Font.Bold = true;
-
-            reportSheet.Column(1).Width = 10.0;
-            reportSheet.Column(2).Width = 10.0;
-            reportSheet.RecalculateAllFormulas();
-            workBook.CalculateMode = XLCalculateMode.Auto;
-            workBook.RecalculateAllFormulas();
             return workBook;
         }
 
@@ -269,6 +245,59 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             sheet.Workbook.DefinedNames.Add(namedRange, totalCell.AsRange());
 
             return sheet;
+        }
+
+        public async Task<XLWorkbook> InsertCategoryReportSheet(XLWorkbook workbook)
+        {
+            var categories = await categoryService.GetAll();
+            var reportSheet = workbook.AddWorksheet("Relatorio Categorias");
+
+            reportSheet.Cell(1, 1).Value = "Categoria";
+            reportSheet.Cell(1, 2).Value = "Total";
+
+            int row = 2;
+
+            foreach (var category in categories)
+            {
+                reportSheet.Cell(row, 1).Value = category.Description;
+                reportSheet.Cell(row, 1).Style.Fill.SetBackgroundColor(XLColor.FromHtml(category.HexadecimalColor!));
+                row++;
+            }
+
+            return new XLWorkbook();
+        }
+
+        public XLWorkbook InsertFullYearSheet(XLWorkbook workbook, Dictionary<string, IXLWorksheet> monthTableMap)
+        {
+            var reportSheet = workbook.AddWorksheet("Relatorio Anual");
+
+            int row = 2;
+
+            foreach (var item in monthTableMap)
+            {
+                reportSheet.Cell(row, 1).Value = item.Key;
+                reportSheet.Cell(row, 2).FormulaA1 = $"=Total_{item.Key}";
+                reportSheet.Cell(row, 2).Style.NumberFormat.Format = "R$#,##0.00";
+                row++;
+            }
+
+            reportSheet = InsertSumOnColumn(reportSheet, reportSheet.LastRowUsed()!.RowNumber(), 2);
+            reportSheet.Columns().AdjustToContents();
+
+            reportSheet.LastCell();
+
+            reportSheet.Cell(1, 1).Value = "Mes";
+            reportSheet.Cell(1, 1).Style.Font.Bold = true;
+
+            reportSheet.Cell(1, 2).Value = "Total gasto";
+            reportSheet.Cell(1, 2).Style.Font.Bold = true;
+
+            reportSheet.Column(1).Width = 10.0;
+            reportSheet.Column(2).Width = 10.0;
+            reportSheet.RecalculateAllFormulas();
+            workbook.CalculateMode = XLCalculateMode.Auto;
+            workbook.RecalculateAllFormulas();
+            return workbook;
         }
     } 
 }
