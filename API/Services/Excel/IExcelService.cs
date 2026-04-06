@@ -18,10 +18,12 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
         public Task<XLWorkbook> CreateYearReport(XLWorkbook excelData, List<SummaryExpenseDTO> _expenses);
 
-        public XLWorkbook InsertFullYearSheet(XLWorkbook excelData, Dictionary<string, IXLWorksheet> monthTableMap);
+        public void InsertFullYearSheet(XLWorkbook excelData, Dictionary<string, IXLWorksheet> monthTableMap);
 
-        public Task<XLWorkbook> InsertCategoryReportSheet(XLWorkbook excelData);
+        public Task InsertCategoryReportSheet(XLWorkbook excelData);
 
         public IXLWorksheet InsertSumOnColumn(IXLWorksheet sheet, int lastRow, int column);
+
+        public void InsertBaseSheet(IXLWorkbook book, List<SummaryExpenseDTO> _expenses);
     }
 }

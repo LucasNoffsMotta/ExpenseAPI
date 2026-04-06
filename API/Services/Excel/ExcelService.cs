@@ -7,6 +7,7 @@ using DocumentFormat.OpenXml.Office2016.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using SQLitePCL;
 using System.Data;
 using System.Reflection;
 using UnitTests_ExpenseAPI.DTO.CategoryDTO;
@@ -93,7 +94,8 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 monthTableMap[mapItem.Key] = monthSheet!;
             }
 
-            workBook = InsertFullYearSheet(workBook, monthTableMap);
+            InsertBaseSheet(workBook, _expenses);
+            InsertFullYearSheet(workBook, monthTableMap);
             await InsertCategoryReportSheet(workBook);
 
             return workBook;
@@ -243,32 +245,35 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
             string namedRange = $"Total_{sheet.Name}";
             sheet.Workbook.DefinedNames.Add(namedRange, totalCell.AsRange());
-
             return sheet;
         }
 
-        public async Task<XLWorkbook> InsertCategoryReportSheet(XLWorkbook workbook)
+        public async Task InsertCategoryReportSheet(XLWorkbook workbook)
         {
             var categories = await categoryService.GetAll();
             var reportSheet = workbook.AddWorksheet("Relatorio Categorias");
 
             reportSheet.Cell(1, 1).Value = "Categoria";
             reportSheet.Cell(1, 2).Value = "Total";
+            reportSheet.ColumnsUsed().Width = 12;
 
-            int row = 2;
+            int categoryRow = 2;
 
             foreach (var category in categories)
             {
-                reportSheet.Cell(row, 1).Value = category.Description;
-                reportSheet.Cell(row, 1).Style.Fill.SetBackgroundColor(XLColor.FromHtml(category.HexadecimalColor!));
-                row++;
-            }
+                reportSheet.Cell(categoryRow, 1).Value = category.Description;
+                reportSheet.Cell(categoryRow, 1).Style.Fill.SetBackgroundColor(XLColor.FromHtml(category.HexadecimalColor!));
 
-            return new XLWorkbook();
+                reportSheet.Cell(categoryRow, 2).FormulaA1 = $"=SUMIFS('Base'!B:B, 'Base'!A:A, A{categoryRow})";
+                reportSheet.Cell(categoryRow, 2).Style.NumberFormat.Format = "R$#,##0.00";
+
+                categoryRow++;
+            }
         }
 
-        public XLWorkbook InsertFullYearSheet(XLWorkbook workbook, Dictionary<string, IXLWorksheet> monthTableMap)
+        public void InsertFullYearSheet(XLWorkbook workbook, Dictionary<string, IXLWorksheet> monthTableMap)
         {
+        
             var reportSheet = workbook.AddWorksheet("Relatorio Anual");
 
             int row = 2;
@@ -288,6 +293,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
             reportSheet.Cell(1, 1).Value = "Mes";
             reportSheet.Cell(1, 1).Style.Font.Bold = true;
+        
 
             reportSheet.Cell(1, 2).Value = "Total gasto";
             reportSheet.Cell(1, 2).Style.Font.Bold = true;
@@ -295,9 +301,34 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             reportSheet.Column(1).Width = 10.0;
             reportSheet.Column(2).Width = 10.0;
             reportSheet.RecalculateAllFormulas();
+            reportSheet.Columns().Width = 12;
+
             workbook.CalculateMode = XLCalculateMode.Auto;
             workbook.RecalculateAllFormulas();
-            return workbook;
+        }
+
+        public void InsertBaseSheet(IXLWorkbook book, List<SummaryExpenseDTO> _expenses)
+        {
+            
+            var baseSheet = book.AddWorksheet("Base");
+
+            baseSheet.Cell(1, 1).Value = "Categoria";
+            baseSheet.Cell(1, 2).Value = "Valor";
+            baseSheet.Cell(1, 3).Value = "Data";
+
+            int row = 2;
+
+            foreach (var expense in _expenses)
+            {
+                baseSheet.Cell(row, 1).Value = expense.Descricao;
+                baseSheet.Cell(row, 2).Value = expense.Valor;
+                baseSheet.Cell(row, 2).Style.NumberFormat.Format = "R$#,##0.00";
+                baseSheet.Cell(row, 3).Value = expense.Data!.Value.ToDateTime(TimeOnly.MinValue);
+
+                row++;
+            }
+
+            baseSheet.Visibility = XLWorksheetVisibility.VeryHidden;
         }
     } 
 }
