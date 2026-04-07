@@ -1,5 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using UnitTests_ExpenseAPI.DTO.CategoryDTO;
+using UnitTests_ExpenseAPI.Mapping;
+using UnitTests_ExpenseAPI.Models;
+using UnitTests_ExpenseAPI.Services;
 using UnitTests_ExpenseAPI.Services.Categories;
 
 namespace UnitTests_ExpenseAPI.Controllers
@@ -9,9 +12,9 @@ namespace UnitTests_ExpenseAPI.Controllers
 
     public class CategoryController : Controller
     {
-        private ICategoryService _categoryService;
+        private IBaseService<Category> _categoryService;
 
-        public CategoryController(ICategoryService categoryService)
+        public CategoryController(IBaseService<Category> categoryService)
         {
             _categoryService = categoryService;
         }
@@ -26,14 +29,14 @@ namespace UnitTests_ExpenseAPI.Controllers
         [HttpPost("delete/{ID}")]
         public async Task<IActionResult> DeleteByID([FromRoute] int ID)
         {
-            var success = await _categoryService.DeleteByID(ID);
+            var success = await _categoryService.Delete(ID);
             return success ? Ok() : BadRequest();
         }
 
         [HttpPost]
         public async Task<IActionResult> CreateCategory(CreateCategoryDTO dto)
         {
-            var result = await _categoryService.Create(dto);
+            var result = await _categoryService.Create(CategoryMapping.CategoryDtoToModel(dto));
             return Ok(result);
         }
     }

@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 using UnitTests_ExpenseAPI.Models;
 
 namespace UnitTests_ExpenseAPI;
-public class Expense
+public class Expense : BaseModel
 {
-    public int ID { get; set; }
-
     public Category? Category { get; set; }
 
     public int CategoryId { get; set; }

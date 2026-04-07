@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
+using UnitTests_ExpenseAPI.Services;
 using UnitTests_ExpenseAPI.Services.Expense;
 
 namespace UnitTests_ExpenseAPI
@@ -10,24 +11,24 @@ namespace UnitTests_ExpenseAPI
     [ApiController]
     public class ExpensesController : ControllerBase
     {
-         private IExpenseService _expenseService;
+         private IBaseService<Expense> _baseService;
 
-        public ExpensesController(IExpenseService expenseService)
+        public ExpensesController(IBaseService<Expense> expenseService)
         {
-            _expenseService = expenseService;
+            _baseService = expenseService;
         }
 
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {  
-            var expensesList = await _expenseService.GetAll();
+            var expensesList = await _baseService.GetAll();
             return Ok(expensesList);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult> GetByID([FromRoute]int id)
         {
-            var expense = await _expenseService.GetById(id);
+            var expense = await _baseService.GetByID(id);
             if (expense is not null)
             {
                 return Ok(expense);
@@ -39,14 +40,14 @@ namespace UnitTests_ExpenseAPI
         [HttpPost]
         public async Task<ActionResult> Create(CreateExpenseDTO dto)
         {
-            bool success = await _expenseService.Create(dto);
+            bool success = await _baseService.Create(ExpenseMappings.ExpenseDtoToModel(dto));
             return success ? Ok(dto) : BadRequest(dto);
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(int id)
         {
-            bool success = await _expenseService.DeleteByID(id);
+            bool success = await _baseService.Delete(id);
             return success ? Ok() : BadRequest();
         }
     }

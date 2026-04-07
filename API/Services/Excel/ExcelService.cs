@@ -10,16 +10,18 @@ using Microsoft.AspNetCore.Mvc;
 using SQLitePCL;
 using System.Data;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using UnitTests_ExpenseAPI.DTO.CategoryDTO;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
+using UnitTests_ExpenseAPI.Models;
 using UnitTests_ExpenseAPI.Services.Categories;
 namespace UnitTests_ExpenseAPI.Services.Excel
 {
     public class ExcelService : IExcelService
     {
-        private ICategoryService categoryService;
+        private IBaseService<Category> categoryService;
 
-        public ExcelService(ICategoryService categoryService)
+        public ExcelService(IBaseService<Category> categoryService)
         {
             this.categoryService = categoryService;
         }
@@ -129,34 +131,34 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
         public async Task<List<CreateExpenseDTO>> GetObjectsFromExcel(XLWorkbook excelData, Type baseModel)
         {
-            IXLWorksheet sheet = excelData.Worksheets.First();
-            var columnHeaders = baseModel.GetProperties();
+            //IXLWorksheet sheet = excelData.Worksheets.First();
+            //var columnHeaders = baseModel.GetProperties();
 
-            List<CreateExpenseDTO> expenses = new List<CreateExpenseDTO>();
-            int columnCount = sheet.LastColumnUsed()!.ColumnNumber();
-            int rowCount = sheet.LastRowUsed()!.RowNumber();
-            int firstColumn = 2; //Ignore the ID column..
+            //List<CreateExpenseDTO> expenses = new List<CreateExpenseDTO>();
+            //int columnCount = sheet.LastColumnUsed()!.ColumnNumber();
+            //int rowCount = sheet.LastRowUsed()!.RowNumber();
+            //int firstColumn = 2; //Ignore the ID column..
 
-            //Ferindo principio SOLID! Nao dependa de implementacoes concretas, e sim de abstracoes...
+            ////Ferindo principio SOLID! Nao dependa de implementacoes concretas, e sim de abstracoes...
 
-            //1st row = Header
-            //2nd row = 1st data row
-            for (int row = 0; row < rowCount - 1; row++)
-            {
-                string description = sheet.Cell(row + 2, firstColumn).Value.ToString();
-                var category = await categoryService.GetCategoryByDescription(description);
-                decimal value = decimal.Parse(sheet.Cell(row + 2, firstColumn + 1).Value.ToString());
-                DateTime dt = DateTime.Parse(sheet.Cell(row + 2, firstColumn + 2).Value.ToString());
-                DateOnly date = DateOnly.FromDateTime(dt);
+            ////1st row = Header
+            ////2nd row = 1st data row
+            //for (int row = 0; row < rowCount - 1; row++)
+            //{
+            //    string description = sheet.Cell(row + 2, firstColumn).Value.ToString();
+            //   // var category = await categoryService.GetCategoryByDescription(description);
+            //    decimal value = decimal.Parse(sheet.Cell(row + 2, firstColumn + 1).Value.ToString());
+            //    DateTime dt = DateTime.Parse(sheet.Cell(row + 2, firstColumn + 2).Value.ToString());
+            //    DateOnly date = DateOnly.FromDateTime(dt);
 
-                expenses.Add(new CreateExpenseDTO(
-                    category.ID,
-                    value,
-                    date)
-                );
-            }
+            //    expenses.Add(new CreateExpenseDTO(
+            //        category.ID,
+            //        value,
+            //        date)
+            //    );
+            //}
 
-            return expenses;
+            return new List<CreateExpenseDTO>();
         }
 
         public IXLWorksheet CreateExcelSheetUsingDataTable(DataTable table, IXLWorksheet sheet)

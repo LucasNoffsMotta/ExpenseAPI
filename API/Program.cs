@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UnitTests_ExpenseAPI;
+using UnitTests_ExpenseAPI.Models;
+using UnitTests_ExpenseAPI.Services;
 using UnitTests_ExpenseAPI.Services.Categories;
 using UnitTests_ExpenseAPI.Services.Excel;
 using UnitTests_ExpenseAPI.Services.Expense;
@@ -12,9 +14,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString)); // Use Sqlite extension
 
-builder.Services.AddScoped<IExpenseService, ExpenseService>();
+builder.Services.AddScoped<IBaseService<Category>, BaseService<Category>>();
+builder.Services.AddScoped<IBaseService<Expense>, BaseService<Expense>>();
 builder.Services.AddScoped<IExcelService, ExcelService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
