@@ -20,12 +20,10 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
         public void InsertSheetContainingMonthsSummary(XLWorkbook excelData, Dictionary<string, IXLWorksheet> monthTableMap);
 
-        public Task InsertSheetConatiningCategoriesSummary(XLWorkbook excelData);
+        public Task InsertSheetContainingCategoriesSummary(XLWorkbook excelData);
 
         public IXLWorksheet InsertSumRowForColumn(IXLWorksheet sheet, int lastRow, int column);
 
         public void InsertBaseSheet(IXLWorkbook book, List<SummaryExpenseDTO> _expenses);
-
-        public void InsertTotalCategoryPerMonth(IXLWorksheet sheet, int lastRow, int totalCategories);
     }
 }

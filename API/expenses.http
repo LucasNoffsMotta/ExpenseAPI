@@ -9,9 +9,9 @@ POST http://localhost:5239/api/expenses
 Content-Type: application/json
 
 {
-  "CategoryID":"7",
-  "value": 1000.00,
-  "date": "2026-01-13"
+  "CategoryID":"8",
+  "value": 3000.00,
+  "date": "2026-01-15"
 }
 
 ###

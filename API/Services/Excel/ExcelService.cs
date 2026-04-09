@@ -7,6 +7,7 @@ using DocumentFormat.OpenXml.Office2016.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using SQLitePCL;
 using System.Data;
 using System.Reflection;
@@ -16,6 +17,12 @@ using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 using UnitTests_ExpenseAPI.Models;
 namespace UnitTests_ExpenseAPI.Services.Excel
 {
+
+    //TODO::
+    //Separar metodos que formatam tabela, ex:
+    //ColocaHeadersEstilizados()
+    //DeixaEmNegrito()
+    //Etc
     public class ExcelService : IExcelService
     {
         private IBaseService<Category> categoryService;
@@ -66,7 +73,6 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 string sheetTitle = date.ToString("MMM");
                 var monthSheet = workBook.AddWorksheet(sheetTitle);
                 monthTableMap[sheetTitle] = monthSheet;
-
             }
 
             foreach (SummaryExpenseDTO expense in _expenses)
@@ -91,12 +97,17 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 var monthSheet = monthTableMap[mapItem.Key];
                 var dt = CreateDataTableFromExpensesDTO(monthSheet, mapItem.Value);
                 monthSheet = CreateExcelSheetBasedOnDataTable(dt, monthSheet);
+
+                var table = monthSheet.Range($"A1:C{monthSheet.LastRowUsed()!.RowNumber() - 1}").CreateTable();
+                table.Name = $"TabelaMes_{mapItem.Key}";
+
+                InsertTotalCategoryPerMonth(monthSheet, table, mapItem.Value);
                 monthTableMap[mapItem.Key] = monthSheet!;
             }
 
             InsertBaseSheet(workBook, _expenses);
             InsertSheetContainingMonthsSummary(workBook, monthTableMap);
-            await InsertSheetConatiningCategoriesSummary(workBook);
+            await InsertSheetContainingCategoriesSummary(workBook);
 
             return workBook;
         }
@@ -248,7 +259,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             return sheet;
         }
 
-        public async Task InsertSheetConatiningCategoriesSummary(XLWorkbook workbook)
+        public async Task InsertSheetContainingCategoriesSummary(XLWorkbook workbook)
         {
             var categories = await categoryService.GetAll();
             var reportSheet = workbook.AddWorksheet("Relatorio Categorias");
@@ -307,26 +318,44 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             workbook.RecalculateAllFormulas();
         }
 
-        public void InsertTotalCategoryPerMonth(IXLWorksheet sheet, int tableStart,int lastRow)
+        private void InsertTotalCategoryPerMonth(IXLWorksheet sheet, IXLTable table, List<SummaryExpenseDTO>? dtoList)
         {
-            int headerRow = lastRow + 5;
+            var categories = 
+                dtoList!
+                .Select(e => e.Descricao!
+                .Trim()).Distinct()
+                .ToList();
 
-            sheet.Cell(tableStart, 1).FormulaA1 =
-                $"=LET(u, UNIQUE(A2:A{lastRow}), HSTACK(u, SUMIFS(B2:B{lastRow}, A2:A{lastRow}, u)))";
+            int headerRow = sheet.LastRowUsed()!.RowNumber() + 5;
+            int startRow = headerRow + 1;
 
-            sheet.Cell(headerRow, 1).Value = "Categoria";
+            sheet.Cell(headerRow, 1).Value = "Categorias";
+            sheet.Cell(headerRow, 1).Style.Font.Bold = true;
             sheet.Cell(headerRow, 2).Value = "Total";
+            sheet.Cell(headerRow, 2).Style.Font.Bold = true;
+            sheet.Cell(headerRow, 2).Style.Font.FontSize = 16;
+            sheet.Cell(headerRow, 1).Style.Font.FontSize = 16;
+            sheet.Cell(headerRow, 1).Style.Fill.SetBackgroundColor(XLColor.AshGrey);
+            sheet.Cell(headerRow, 2).Style.Fill.SetBackgroundColor(XLColor.AshGrey);
 
-            int tableStart = headerRow + 1;
+            sheet.Range($"A{startRow}:A100").Clear();
 
-            //Como eu vou saber as categorias que existem neste mes e o total de cada uma??
-            for(int row = tableStart; row < totalCategories; row++)
+            //Populate categories column
+            int categoryRow = startRow;
+
+            for(int i = 0; i < categories.Count; i++)
             {
-                sheet.Cell(row, 1).FormulaA1 = $"=LET(u, UNIQUE(A2:A10), HSTACK(u, SUMIFS(B2:B10, A2:A10, u)))";
+                sheet.Cell(categoryRow, 1).Value = categories[i];
+                categoryRow++;
             }
 
+            for (int row = startRow; row < 50; row++)
+            {
+                sheet.Cell(row, 2).FormulaA1 =
+                    $"=IF(A{row}=\"\",\"\",SUMIFS({table.Name}[Valor], {table.Name}[Descricao], A{row}))";
 
-
+                sheet.Cell(row, 2).Style.NumberFormat.Format = "R$#,##0.00";
+            }
         }
 
         public void InsertBaseSheet(IXLWorkbook book, List<SummaryExpenseDTO> _expenses)
@@ -342,6 +371,8 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
             foreach (var expense in _expenses)
             {
+                var cell = baseSheet.Cell(row, 3);
+
                 baseSheet.Cell(row, 1).Value = expense.Descricao;
                 baseSheet.Cell(row, 2).Value = expense.Valor;
                 baseSheet.Cell(row, 2).Style.NumberFormat.Format = "R$#,##0.00";
@@ -349,6 +380,9 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
                 row++;
             }
+
+            var table = baseSheet.Range($"A1:C{row - 1}").CreateTable();
+            table.Name = "Base"; 
 
             baseSheet.Visibility = XLWorksheetVisibility.VeryHidden;
         }

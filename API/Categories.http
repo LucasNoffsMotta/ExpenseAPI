@@ -3,8 +3,8 @@ POST http://localhost:5239/api/category
 Content-Type: application/json
 
 {
-  "Description":"Drogas",
-  "HexadecimalColor": "#67eb8a"
+  "Description":"Uber",
+  "HexadecimalColor": "#8c97ab"
 }
 
 ###
