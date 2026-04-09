@@ -2,9 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using UnitTests_ExpenseAPI;
 using UnitTests_ExpenseAPI.Models;
 using UnitTests_ExpenseAPI.Services;
-using UnitTests_ExpenseAPI.Services.Categories;
 using UnitTests_ExpenseAPI.Services.Excel;
-using UnitTests_ExpenseAPI.Services.Expense;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -14,7 +14,6 @@ using System.Reflection.Metadata.Ecma335;
 using UnitTests_ExpenseAPI.DTO.CategoryDTO;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 using UnitTests_ExpenseAPI.Models;
-using UnitTests_ExpenseAPI.Services.Categories;
 namespace UnitTests_ExpenseAPI.Services.Excel
 {
     public class ExcelService : IExcelService
@@ -26,7 +25,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             this.categoryService = categoryService;
         }
 
-        public IXLWorksheet? SaveDataIntoExcelSheet(IXLWorksheet sheet, List<SummaryExpenseDTO>? _expenses)
+        public DataTable? CreateDataTableFromExpensesDTO(IXLWorksheet sheet, List<SummaryExpenseDTO>? _expenses)
         {
             //Temp:
             string[] columnsToIgnoreOnDataTable = { "ID" };
@@ -37,7 +36,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             var columnHeaders = type.GetProperties();
             int tableColumnsRange = columnHeaders.Length;
 
-            DataTable table = InitiateDataTable(columnHeaders, columnsToIgnoreOnDataTable);
+            DataTable table = InitiateDataTableBasedOnObjProperties(columnHeaders, columnsToIgnoreOnDataTable);
 
 
             for (int row = 0; row < _expenses.Count; row++)
@@ -51,13 +50,11 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 table.Rows.Add("Nenhuma", 0.0m, "xx/xx/xx", "#FFFFFF");
             }
 
-            sheet = CreateExcelSheetUsingDataTable(table, sheet);
-
-            return sheet;
+            return table;
         }
 
         //Ignoring the year here...
-        public async Task<XLWorkbook> CreateYearReport(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
+        public async Task<XLWorkbook> ExportFullYearWorkbook(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
         {
             IXLWorksheet[] sheets = new IXLWorksheet[12];
             Dictionary<string, IXLWorksheet> monthTableMap = new Dictionary<string, IXLWorksheet>();
@@ -92,19 +89,20 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             foreach (KeyValuePair<string, List<SummaryExpenseDTO>> mapItem in monthDtoMap)
             {
                 var monthSheet = monthTableMap[mapItem.Key];
-                monthSheet = SaveDataIntoExcelSheet(monthSheet, mapItem.Value);
+                var dt = CreateDataTableFromExpensesDTO(monthSheet, mapItem.Value);
+                monthSheet = CreateExcelSheetBasedOnDataTable(dt, monthSheet);
                 monthTableMap[mapItem.Key] = monthSheet!;
             }
 
             InsertBaseSheet(workBook, _expenses);
-            InsertFullYearSheet(workBook, monthTableMap);
-            await InsertCategoryReportSheet(workBook);
+            InsertSheetContainingMonthsSummary(workBook, monthTableMap);
+            await InsertSheetConatiningCategoriesSummary(workBook);
 
             return workBook;
         }
 
 
-        public DataTable InitiateDataTable(PropertyInfo[] dataProps, string[] columnsToIgnore)
+        public DataTable InitiateDataTableBasedOnObjProperties(PropertyInfo[] dataProps, string[] columnsToIgnore)
         {
             DataTable table = new DataTable();
 
@@ -161,7 +159,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             return new List<CreateExpenseDTO>();
         }
 
-        public IXLWorksheet CreateExcelSheetUsingDataTable(DataTable table, IXLWorksheet sheet)
+        public IXLWorksheet CreateExcelSheetBasedOnDataTable(DataTable table, IXLWorksheet sheet)
         {
             string[] columnsToIgnoreOnExcel = { "ID", "Color" };
 
@@ -218,7 +216,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 }
                 #endregion
 
-                sheet = InsertSumOnColumn(sheet, sheet.LastRowUsed()!.RowNumber(), 2);
+                sheet = InsertSumRowForColumn(sheet, sheet.LastRowUsed()!.RowNumber(), 2);
             }
 
 
@@ -231,7 +229,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
         }
 
-        public IXLWorksheet InsertSumOnColumn(IXLWorksheet sheet, int lastRow, int column)
+        public IXLWorksheet InsertSumRowForColumn(IXLWorksheet sheet, int lastRow, int column)
         {
             int newRow = lastRow + 1;
             int sumColumn = column;
@@ -250,7 +248,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             return sheet;
         }
 
-        public async Task InsertCategoryReportSheet(XLWorkbook workbook)
+        public async Task InsertSheetConatiningCategoriesSummary(XLWorkbook workbook)
         {
             var categories = await categoryService.GetAll();
             var reportSheet = workbook.AddWorksheet("Relatorio Categorias");
@@ -273,7 +271,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             }
         }
 
-        public void InsertFullYearSheet(XLWorkbook workbook, Dictionary<string, IXLWorksheet> monthTableMap)
+        public void InsertSheetContainingMonthsSummary(XLWorkbook workbook, Dictionary<string, IXLWorksheet> monthTableMap)
         {
         
             var reportSheet = workbook.AddWorksheet("Relatorio Anual");
@@ -288,7 +286,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 row++;
             }
 
-            reportSheet = InsertSumOnColumn(reportSheet, reportSheet.LastRowUsed()!.RowNumber(), 2);
+            reportSheet = InsertSumRowForColumn(reportSheet, reportSheet.LastRowUsed()!.RowNumber(), 2);
             reportSheet.Columns().AdjustToContents();
 
             reportSheet.LastCell();
@@ -307,6 +305,28 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
             workbook.CalculateMode = XLCalculateMode.Auto;
             workbook.RecalculateAllFormulas();
+        }
+
+        public void InsertTotalCategoryPerMonth(IXLWorksheet sheet, int tableStart,int lastRow)
+        {
+            int headerRow = lastRow + 5;
+
+            sheet.Cell(tableStart, 1).FormulaA1 =
+                $"=LET(u, UNIQUE(A2:A{lastRow}), HSTACK(u, SUMIFS(B2:B{lastRow}, A2:A{lastRow}, u)))";
+
+            sheet.Cell(headerRow, 1).Value = "Categoria";
+            sheet.Cell(headerRow, 2).Value = "Total";
+
+            int tableStart = headerRow + 1;
+
+            //Como eu vou saber as categorias que existem neste mes e o total de cada uma??
+            for(int row = tableStart; row < totalCategories; row++)
+            {
+                sheet.Cell(row, 1).FormulaA1 = $"=LET(u, UNIQUE(A2:A10), HSTACK(u, SUMIFS(B2:B10, A2:A10, u)))";
+            }
+
+
+
         }
 
         public void InsertBaseSheet(IXLWorkbook book, List<SummaryExpenseDTO> _expenses)

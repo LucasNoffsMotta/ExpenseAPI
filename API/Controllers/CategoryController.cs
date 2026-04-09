@@ -3,7 +3,6 @@ using UnitTests_ExpenseAPI.DTO.CategoryDTO;
 using UnitTests_ExpenseAPI.Mapping;
 using UnitTests_ExpenseAPI.Models;
 using UnitTests_ExpenseAPI.Services;
-using UnitTests_ExpenseAPI.Services.Categories;
 
 namespace UnitTests_ExpenseAPI.Controllers
 {

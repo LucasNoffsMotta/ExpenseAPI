@@ -6,7 +6,6 @@ using UnitTests_ExpenseAPI.DTO.ExcelDTO;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 using UnitTests_ExpenseAPI.Services;
 using UnitTests_ExpenseAPI.Services.Excel;
-using UnitTests_ExpenseAPI.Services.Expense;
 
 namespace UnitTests_ExpenseAPI.Controllers
 {
@@ -34,7 +33,8 @@ namespace UnitTests_ExpenseAPI.Controllers
             
             var workBook = new XLWorkbook();
             var workSheet = workBook.Worksheets.Add("main_sheet");
-            workSheet =  _excelService.SaveDataIntoExcelSheet(workSheet, expensesDTO);
+            var table = _excelService.CreateDataTableFromExpensesDTO(workSheet, expensesDTO);
+            var worksheet = _excelService.CreateExcelSheetBasedOnDataTable(table, workSheet);
             workBook.SaveAs(_config.GetSection("BasicReportFilePath").Value);   
             return workSheet != null ? Ok($"New table created") : BadRequest($"Table wasnt created");
         }
@@ -48,7 +48,7 @@ namespace UnitTests_ExpenseAPI.Controllers
 
             try
             {
-                book = await _excelService.CreateYearReport(book, expensesDTO);
+                book = await _excelService.ExportFullYearWorkbook(book, expensesDTO);
                 book.SaveAs(_config.GetSection("FullReportFilePath").Value);
             }
 
