@@ -1,35 +1,19 @@
 ﻿using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Bibliography;
-using DocumentFormat.OpenXml.Drawing;
-using DocumentFormat.OpenXml.Office2010.ExcelAc;
-using DocumentFormat.OpenXml.Office2010.PowerPoint;
-using DocumentFormat.OpenXml.Office2016.Excel;
 using DocumentFormat.OpenXml.Spreadsheet;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using SQLitePCL;
 using System.Data;
 using System.Reflection;
-using System.Reflection.Metadata.Ecma335;
-using UnitTests_ExpenseAPI.DTO.CategoryDTO;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 using UnitTests_ExpenseAPI.Models;
+using UnitTests_ExpenseAPI.Repo;
 namespace UnitTests_ExpenseAPI.Services.Excel
 {
-
-    //TODO::
-    //Separar metodos que formatam tabela, ex:
-    //ColocaHeadersEstilizados()
-    //DeixaEmNegrito()
-    //Etc
     public class ExcelService : IExcelService
     {
-        private IBaseService<Category> categoryService;
+        private IBaseRepo<Category> categoryRepo;
 
-        public ExcelService(IBaseService<Category> categoryService)
+        public ExcelService(IBaseRepo<Category> categoryRepo)
         {
-            this.categoryService = categoryService;
+            this.categoryRepo = categoryRepo;
         }
 
         public DataTable? CreateDataTableFromExpensesDTO(IXLWorksheet sheet, List<SummaryExpenseDTO>? _expenses)
@@ -138,6 +122,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             return table;
         }
 
+        //TODO
         public async Task<List<CreateExpenseDTO>> GetObjectsFromExcel(XLWorkbook excelData, Type baseModel)
         {
             //IXLWorksheet sheet = excelData.Worksheets.First();
@@ -155,7 +140,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             //for (int row = 0; row < rowCount - 1; row++)
             //{
             //    string description = sheet.Cell(row + 2, firstColumn).Value.ToString();
-            //   // var category = await categoryService.GetCategoryByDescription(description);
+            //   // var category = await categoryRepo.GetCategoryByDescription(description);
             //    decimal value = decimal.Parse(sheet.Cell(row + 2, firstColumn + 1).Value.ToString());
             //    DateTime dt = DateTime.Parse(sheet.Cell(row + 2, firstColumn + 2).Value.ToString());
             //    DateOnly date = DateOnly.FromDateTime(dt);
@@ -184,11 +169,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
                     if (!ignore)
                     {
-                        sheet.Cell(1, i + 1).Value = table.Columns[i].ColumnName;
-                        sheet.Cell(1, i + 1).Style.Font.Bold = true;
-                        sheet.Cell(1, i + 1).Style.Font.FontSize = 16;
-                        sheet.Row(1).Style.Fill.SetBackgroundColor(XLColor.AshGrey);
-                        sheet.Column(i + 1).Width = 15;
+                        MakeHeader(sheet, 1, i + 1, table.Columns[i].ColumnName);
                     }
                 }
                 #endregion
@@ -261,31 +242,31 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
         public async Task InsertSheetContainingCategoriesSummary(XLWorkbook workbook)
         {
-            var categories = await categoryService.GetAll();
+            var categories = await categoryRepo.GetAll();
             var reportSheet = workbook.AddWorksheet("Relatorio Categorias");
 
-            reportSheet.Cell(1, 1).Value = "Categoria";
-            reportSheet.Cell(1, 2).Value = "Total";
-            reportSheet.ColumnsUsed().Width = 12;
+            MakeHeader(reportSheet, 1, 1, "Categoria");
+            MakeHeader(reportSheet, 1, 2, "Total");
 
             int categoryRow = 2;
 
             foreach (var category in categories)
             {
                 reportSheet.Cell(categoryRow, 1).Value = category.Description;
-                reportSheet.Cell(categoryRow, 1).Style.Fill.SetBackgroundColor(XLColor.FromHtml(category.HexadecimalColor!));
-
                 reportSheet.Cell(categoryRow, 2).FormulaA1 = $"=SUMIFS('Base'!B:B, 'Base'!A:A, A{categoryRow})";
                 reportSheet.Cell(categoryRow, 2).Style.NumberFormat.Format = "R$#,##0.00";
-
+                PaintCellBackground(reportSheet.Cell(categoryRow, 1), category.HexadecimalColor!, null);
+                PaintCellBackground(reportSheet.Cell(categoryRow, 2), category.HexadecimalColor!, null);
                 categoryRow++;
             }
         }
 
         public void InsertSheetContainingMonthsSummary(XLWorkbook workbook, Dictionary<string, IXLWorksheet> monthTableMap)
-        {
-        
+        {      
             var reportSheet = workbook.AddWorksheet("Relatorio Anual");
+
+            MakeHeader(reportSheet, 1, 1, "Mes");
+            MakeHeader(reportSheet, 1, 2, "Total Gasto");
 
             int row = 2;
 
@@ -300,52 +281,29 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             reportSheet = InsertSumRowForColumn(reportSheet, reportSheet.LastRowUsed()!.RowNumber(), 2);
             reportSheet.Columns().AdjustToContents();
 
-            reportSheet.LastCell();
-
-            reportSheet.Cell(1, 1).Value = "Mes";
-            reportSheet.Cell(1, 1).Style.Font.Bold = true;
-        
-
-            reportSheet.Cell(1, 2).Value = "Total gasto";
-            reportSheet.Cell(1, 2).Style.Font.Bold = true;
-
-            reportSheet.Column(1).Width = 10.0;
-            reportSheet.Column(2).Width = 10.0;
-            reportSheet.RecalculateAllFormulas();
-            reportSheet.Columns().Width = 12;
-
-            workbook.CalculateMode = XLCalculateMode.Auto;
-            workbook.RecalculateAllFormulas();
         }
 
         private void InsertTotalCategoryPerMonth(IXLWorksheet sheet, IXLTable table, List<SummaryExpenseDTO>? dtoList)
         {
             var categories = 
                 dtoList!
-                .Select(e => e.Descricao!
-                .Trim()).Distinct()
+                .Select(e => e).DistinctBy(e => e.Descricao)
                 .ToList();
 
+           
             int headerRow = sheet.LastRowUsed()!.RowNumber() + 5;
             int startRow = headerRow + 1;
 
-            sheet.Cell(headerRow, 1).Value = "Categorias";
-            sheet.Cell(headerRow, 1).Style.Font.Bold = true;
-            sheet.Cell(headerRow, 2).Value = "Total";
-            sheet.Cell(headerRow, 2).Style.Font.Bold = true;
-            sheet.Cell(headerRow, 2).Style.Font.FontSize = 16;
-            sheet.Cell(headerRow, 1).Style.Font.FontSize = 16;
-            sheet.Cell(headerRow, 1).Style.Fill.SetBackgroundColor(XLColor.AshGrey);
-            sheet.Cell(headerRow, 2).Style.Fill.SetBackgroundColor(XLColor.AshGrey);
+            MakeHeader(sheet, headerRow, 1, "Categoria");
+            MakeHeader(sheet, headerRow, 2, "Total");
 
-            sheet.Range($"A{startRow}:A100").Clear();
-
-            //Populate categories column
             int categoryRow = startRow;
 
             for(int i = 0; i < categories.Count; i++)
             {
-                sheet.Cell(categoryRow, 1).Value = categories[i];
+                sheet.Cell(categoryRow, 1).Value = categories[i].Descricao;
+                PaintCellBackground(sheet.Cell(categoryRow, 1), categories[i].Color!, null);
+                PaintCellBackground(sheet.Cell(categoryRow, 2), categories[i].Color!, null);
                 categoryRow++;
             }
 
@@ -375,7 +333,6 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
                 baseSheet.Cell(row, 1).Value = expense.Descricao;
                 baseSheet.Cell(row, 2).Value = expense.Valor;
-                baseSheet.Cell(row, 2).Style.NumberFormat.Format = "R$#,##0.00";
                 baseSheet.Cell(row, 3).Value = expense.Data!.Value.ToDateTime(TimeOnly.MinValue);
 
                 row++;
@@ -385,6 +342,39 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             table.Name = "Base"; 
 
             baseSheet.Visibility = XLWorksheetVisibility.VeryHidden;
+        }
+
+        public void MakeHeader(IXLWorksheet sheet, int row, int column, string value)
+        {
+            sheet.Cell(row, column).Value = value;
+            sheet.Cell(row, column).Style.Font.Bold = true;
+            sheet.Cell(row, column).Style.Font.FontSize = 16;
+            PaintCellBackground(sheet.Cell(row, column), null, XLColor.AshGrey);
+            sheet.Row(row).Style.Fill.SetBackgroundColor(XLColor.AshGrey);
+            sheet.Column(column).Width = 15;
+        }
+
+        public void PaintCellBackground(IXLCell cell, string? hexaDecimalcolor = null, XLColor? color = null)
+        {
+            if (hexaDecimalcolor != null)
+            {
+                PaintCellBackground(cell, hexaDecimalcolor);
+            }
+
+            else if(color != null)
+            {
+                PaintCellBackground(cell, color);
+            }
+        }
+
+        private void PaintCellBackground(IXLCell cell, string hexadecimalColor)
+        {
+            cell.Style.Fill.SetBackgroundColor(XLColor.FromHtml(hexadecimalColor));
+        }
+
+        private void PaintCellBackground(IXLCell cell, XLColor color)
+        {
+            cell.Style.Fill.SetBackgroundColor(color);
         }
     } 
 }

@@ -3,13 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using UnitTests_ExpenseAPI.Models;
 
-namespace UnitTests_ExpenseAPI.Services
+namespace UnitTests_ExpenseAPI.Repo
 {
-    public class BaseService<T> : IBaseService<T> where T : BaseModel
+    public class BaseRepo<T> : IBaseRepo<T> where T : BaseModel
     {
         private AppDbContext _dbContext;
 
-        public BaseService(AppDbContext dbContext)
+        public BaseRepo(AppDbContext dbContext)
         {
             _dbContext = dbContext;
         }

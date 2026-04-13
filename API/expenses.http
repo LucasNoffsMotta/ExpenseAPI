@@ -31,4 +31,9 @@ Content-Type: application/json
 }
 
 ###
-POST  http://localhost:5239/api/excel/dataReport
+POST  http://localhost:5239/api/excel/exportYearReport
+Content-Type: application/json
+
+{
+  "Path" : "D://Projetos//TesteAPIExcel"
+}

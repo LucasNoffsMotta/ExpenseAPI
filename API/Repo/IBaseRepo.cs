@@ -1,8 +1,8 @@
 ﻿using System.Linq.Expressions;
 
-namespace UnitTests_ExpenseAPI.Services
+namespace UnitTests_ExpenseAPI.Repo
 {
-    public interface IBaseService<T>
+    public interface IBaseRepo<T>
     {
         public Task<T?> GetByID(int id);
         public Task<List<T>> GetAll(Expression<Func<T, bool>>? where = null, params string[] includes);

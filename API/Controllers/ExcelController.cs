@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.IO;
 using UnitTests_ExpenseAPI.DTO.ExcelDTO;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
-using UnitTests_ExpenseAPI.Services;
+using UnitTests_ExpenseAPI.Repo;
 using UnitTests_ExpenseAPI.Services.Excel;
 
 namespace UnitTests_ExpenseAPI.Controllers
@@ -13,11 +13,11 @@ namespace UnitTests_ExpenseAPI.Controllers
     [ApiController]
     public class ExcelController : Controller
     {
-        private IBaseService<Expense> _expenseService;
+        private IBaseRepo<Expense> _expenseService;
         private IExcelService _excelService;
         private IConfiguration _config;
 
-        public ExcelController(IBaseService<Expense> expenseService, IExcelService excelService, IConfiguration config)
+        public ExcelController(IBaseRepo<Expense> expenseService, IExcelService excelService, IConfiguration config)
         {
             _expenseService = expenseService;
             _excelService = excelService;
@@ -29,8 +29,7 @@ namespace UnitTests_ExpenseAPI.Controllers
         {
       
             var expenses = await _expenseService.GetAll();
-            var expensesDTO = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();
-            
+            var expensesDTO = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();        
             var workBook = new XLWorkbook();
             var workSheet = workBook.Worksheets.Add("main_sheet");
             var table = _excelService.CreateDataTableFromExpensesDTO(workSheet, expensesDTO);
@@ -39,25 +38,32 @@ namespace UnitTests_ExpenseAPI.Controllers
             return workSheet != null ? Ok($"New table created") : BadRequest($"Table wasnt created");
         }
 
-        [HttpPost("dataReport")]
-        public async Task<IActionResult> CreateCompleteDataAnalytcs()
+        [HttpPost("exportYearReport")]
+        public async Task<IActionResult> ExportYearReport([FromBody] ExportFolderDTO exportFolder)
         {
+            string filePath = Path.Combine(exportFolder.Path, $"YearReport_{DateTime.Now.Date.ToString("yyyy-MM-dd")}.xlsx");
             var expenses = await _expenseService.GetAll(null, "Category");
             var expensesDTO = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();
             XLWorkbook book = new XLWorkbook();
+            ReportExportDTO exportDTO = new ReportExportDTO();
 
             try
             {
                 book = await _excelService.ExportFullYearWorkbook(book, expensesDTO);
-                book.SaveAs(_config.GetSection("FullReportFilePath").Value);
+                book.SaveAs(filePath);
+                exportDTO.Success = true;
+                exportDTO.ExportStatus = $"Report exported to {filePath}.";
+                exportDTO.FilePath = filePath;
             }
 
             catch(Exception ex)
             {
-                throw new Exception(ex.Message);
+                exportDTO.Success = false;
+                exportDTO.ExportStatus = ex.Message.ToString();
+                exportDTO.FilePath = string.Empty;
             }
 
-            return Ok();
+            return Ok(exportDTO);
         }
 
 

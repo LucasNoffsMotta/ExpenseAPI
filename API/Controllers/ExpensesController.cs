@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
-using UnitTests_ExpenseAPI.Services;
+using UnitTests_ExpenseAPI.Repo;
 
 namespace UnitTests_ExpenseAPI
 {
@@ -10,9 +10,9 @@ namespace UnitTests_ExpenseAPI
     [ApiController]
     public class ExpensesController : ControllerBase
     {
-         private IBaseService<Expense> _baseService;
+         private IBaseRepo<Expense> _baseService;
 
-        public ExpensesController(IBaseService<Expense> expenseService)
+        public ExpensesController(IBaseRepo<Expense> expenseService)
         {
             _baseService = expenseService;
         }

@@ -2,7 +2,7 @@
 using UnitTests_ExpenseAPI.DTO.CategoryDTO;
 using UnitTests_ExpenseAPI.Mapping;
 using UnitTests_ExpenseAPI.Models;
-using UnitTests_ExpenseAPI.Services;
+using UnitTests_ExpenseAPI.Repo;
 
 namespace UnitTests_ExpenseAPI.Controllers
 {
@@ -11,9 +11,9 @@ namespace UnitTests_ExpenseAPI.Controllers
 
     public class CategoryController : Controller
     {
-        private IBaseService<Category> _categoryService;
+        private IBaseRepo<Category> _categoryService;
 
-        public CategoryController(IBaseService<Category> categoryService)
+        public CategoryController(IBaseRepo<Category> categoryService)
         {
             _categoryService = categoryService;
         }

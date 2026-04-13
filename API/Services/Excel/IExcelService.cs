@@ -25,5 +25,10 @@ namespace UnitTests_ExpenseAPI.Services.Excel
         public IXLWorksheet InsertSumRowForColumn(IXLWorksheet sheet, int lastRow, int column);
 
         public void InsertBaseSheet(IXLWorkbook book, List<SummaryExpenseDTO> _expenses);
+
+        //Table layout functions:
+        public void MakeHeader(IXLWorksheet sheet, int row, int column, string value);
+
+        public void PaintCellBackground(IXLCell cell, string? hexaDecimalcolor = null, XLColor? color=null);
     }
 }
