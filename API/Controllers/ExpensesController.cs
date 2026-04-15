@@ -24,6 +24,29 @@ namespace UnitTests_ExpenseAPI
             return Ok(expensesList);
         }
 
+        [HttpGet("summary")]
+        public async Task<ActionResult> GetAllSummaryDto()
+        {
+            var expenses = await _baseService.GetAll(null, "Category");
+
+            List<SummaryExpenseDTO> dtos = new List<SummaryExpenseDTO>();
+
+            foreach(var ex in expenses)
+            {
+                dtos.Add(
+                    new SummaryExpenseDTO
+                    (
+                        ex.ID, 
+                        ex.Category.Description, 
+                        ex.Value, 
+                        ex.Date, 
+                        ex.Category.HexadecimalColor)
+                    );
+            }
+
+            return Ok(dtos);
+        }
+
         [HttpGet("{id}")]
         public async Task<ActionResult> GetByID([FromRoute]int id)
         {
