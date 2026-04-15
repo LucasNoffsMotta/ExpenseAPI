@@ -36,6 +36,7 @@ namespace UnitTests_ExpenseAPI.Controllers
         public async Task<IActionResult> CreateCategory(CreateCategoryDTO dto)
         {
             var result = await _categoryService.Create(CategoryMapping.CategoryDtoToModel(dto));
+
             return Ok(result);
         }
     }
