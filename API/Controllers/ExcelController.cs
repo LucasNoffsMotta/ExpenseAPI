@@ -63,7 +63,7 @@ namespace UnitTests_ExpenseAPI.Controllers
                 exportDTO.FilePath = string.Empty;
             }
 
-            return Ok(exportDTO);
+            return exportDTO.Success ? Ok(exportDTO) : BadRequest(exportDTO);
         }
 
 

@@ -10,7 +10,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
                        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(connectionString)); // Use Sqlite extension
+    options.UseSqlite(connectionString)); 
 
 builder.Services.AddScoped<IBaseRepo<Category>, BaseRepo<Category>>();
 builder.Services.AddScoped<IBaseRepo<Expense>, BaseRepo<Expense>>();
@@ -18,8 +18,18 @@ builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+
 var app = builder.Build();
-//app.UseHttpsRedirection();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(); 
+}
+
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
