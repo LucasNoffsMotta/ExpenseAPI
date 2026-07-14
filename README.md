@@ -85,7 +85,6 @@ Excel (controller: `ExcelController`):
 - Excel import (`GetObjectsFromExcel`) is not implemented — returns an empty list (see `API/Services/Excel/ExcelService.cs`).
 - No authentication/authorization — do not expose to untrusted networks without adding auth.
 - No unit tests included. Consider adding tests for controllers and Excel generation.
-- Paths in `appsettings.json` are environment-specific; update before running on another machine.
 
 ## Project layout
 - `API/` — Web API project
