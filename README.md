@@ -82,7 +82,7 @@ Excel (controller: `ExcelController`):
 { "DataFile": "C:\\temp\\ToImport.xlsx" }
 
 ## Important notes & TODOs
-- Excel import (`GetObjectsFromExcel`) is not implemented — returns an empty list (see `API/Services/Excel/ExcelService.cs`).
+- Excel import (`GetObjectsFromExcel`) is not implemented, returns an empty list (see `API/Services/Excel/ExcelService.cs`).
 - No authentication/authorization — do not expose to untrusted networks without adding auth.
 - No unit tests included. Consider adding tests for controllers and Excel generation.
 
@@ -92,9 +92,6 @@ Excel (controller: `ExcelController`):
   - `Services/Excel/` — Excel service and interface
   - `DTO/` — request/response DTOs
   - `Program.cs`, `appsettings.json`
-
-## Contributing
-Follow repository coding style and open PRs for new features or fixes. See `CONTRIBUTING.md` (create or update it if missing).
 
 ## Troubleshooting
 - If the SQLite file cannot be created, ensure the running user has write permission to the folder referenced in `DefaultConnection`.
