@@ -1,5 +1,5 @@
 ﻿using ClosedXML.Excel;
-using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Wordprocessing;
 using System.Data;
 using System.Reflection;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
@@ -9,14 +9,15 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 {
     public class ExcelService : IExcelService
     {
-        private IBaseRepo<Category> categoryRepo;
+        private IBaseRepo<Models.Category> categoryRepo;
 
-        public ExcelService(IBaseRepo<Category> categoryRepo)
+        public ExcelService(IBaseRepo<Models.Category> categoryRepo)
         {
             this.categoryRepo = categoryRepo;
+           
         }
 
-        public DataTable? CreateDataTableFromExpensesDTO(IXLWorksheet sheet, List<SummaryExpenseDTO>? _expenses)
+        public DataTable? CreateDataTableFromExpensesDTO(List<SummaryExpenseDTO>? _expenses)
         {
             //Temp:
             string[] columnsToIgnoreOnDataTable = { "ID" };
@@ -79,7 +80,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             foreach (KeyValuePair<string, List<SummaryExpenseDTO>> mapItem in monthDtoMap)
             {
                 var monthSheet = monthTableMap[mapItem.Key];
-                var dt = CreateDataTableFromExpensesDTO(monthSheet, mapItem.Value);
+                var dt = CreateDataTableFromExpensesDTO(mapItem.Value);
                 monthSheet = CreateExcelSheetBasedOnDataTable(dt, monthSheet);
 
                 var table = monthSheet.Range($"A1:C{monthSheet.LastRowUsed()!.RowNumber() - 1}").CreateTable();
@@ -132,8 +133,6 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             //int columnCount = sheet.LastColumnUsed()!.ColumnNumber();
             //int rowCount = sheet.LastRowUsed()!.RowNumber();
             //int firstColumn = 2; //Ignore the ID column..
-
-            ////Ferindo principio SOLID! Nao dependa de implementacoes concretas, e sim de abstracoes...
 
             ////1st row = Header
             ////2nd row = 1st data row
@@ -375,6 +374,26 @@ namespace UnitTests_ExpenseAPI.Services.Excel
         private void PaintCellBackground(IXLCell cell, XLColor color)
         {
             cell.Style.Fill.SetBackgroundColor(color);
+        }
+
+        public XLWorkbook ExportMonthWorkbook(string month, List<SummaryExpenseDTO> _expenses)
+        {
+            try
+            {
+                XLWorkbook workbook = new XLWorkbook();
+                var sheet = workbook.AddWorksheet(month);
+                var dt = CreateDataTableFromExpensesDTO(_expenses);
+                sheet = CreateExcelSheetBasedOnDataTable(dt!, sheet);
+                var table = sheet.Range($"A1:C{sheet.LastRowUsed()!.RowNumber() - 1}").CreateTable();
+                table.Name = $"TabelaMes_{month}";
+                InsertTotalCategoryPerMonth(sheet, table, _expenses);
+                return workbook;
+            }
+
+            catch(Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     } 
 }

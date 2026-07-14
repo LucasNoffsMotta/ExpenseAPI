@@ -24,24 +24,40 @@ namespace UnitTests_ExpenseAPI.Controllers
             _config = config; 
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateExcelTable()
+        [HttpPost("exportMonthReport")]
+        public async Task<ActionResult<SummaryExpenseDTO>> ExportMonthReport([FromQuery] int month, [FromBody] ExportFolderDTO folder)
         {
-      
-            var expenses = await _expenseService.GetAll();
-            var expensesDTO = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();        
-            var workBook = new XLWorkbook();
-            var workSheet = workBook.Worksheets.Add("main_sheet");
-            var table = _excelService.CreateDataTableFromExpensesDTO(workSheet, expensesDTO);
-            var worksheet = _excelService.CreateExcelSheetBasedOnDataTable(table, workSheet);
-            workBook.SaveAs(_config.GetSection("BasicReportFilePath").Value);   
-            return workSheet != null ? Ok($"New table created") : BadRequest($"Table wasnt created");
+            DateOnly date = new DateOnly(2025, month, 1);
+            string monthName = date.ToString("MMM");
+
+            ReportExportDTO exportDTO = new ReportExportDTO();
+            string filePath = Path.Combine(folder.Path, $"MonthReport_{monthName}_{DateTime.Now.Date.ToString("yyyy-MM-dd")}.xlsx");
+
+            try
+            {
+                var expenses = await _expenseService.GetAll(e => e.Date.Month == month, "Category");
+                var dtos = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();
+                var book = _excelService.ExportMonthWorkbook(monthName, dtos);
+                book.SaveAs(filePath);
+                exportDTO.ExportStatus = $"Report exported to {filePath}.";
+                exportDTO.FilePath = filePath;
+            }
+
+            catch (Exception ex)
+            {
+                exportDTO.Success = false;
+                exportDTO.ExportStatus = ex.Message.ToString();
+                exportDTO.FilePath = string.Empty;
+            }
+
+            return exportDTO.Success ? Ok(exportDTO) : BadRequest(exportDTO);
         }
 
+
         [HttpPost("exportYearReport")]
-        public async Task<IActionResult> ExportYearReport([FromBody] ExportFolderDTO exportFolder)
+        public async Task<IActionResult> ExportYearReport([FromBody] ExportFolderDTO folder)
         {
-            string filePath = Path.Combine(exportFolder.Path, $"YearReport_{DateTime.Now.Date.ToString("yyyy-MM-dd")}.xlsx");
+            string filePath = Path.Combine(folder.Path, $"YearReport_{DateTime.Now.Date.ToString("yyyy-MM-dd")}.xlsx");
             var expenses = await _expenseService.GetAll(null, "Category");
             var expensesDTO = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();
             XLWorkbook book = new XLWorkbook();

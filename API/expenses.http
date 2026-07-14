@@ -1,6 +1,10 @@
 http://localhost:5239/api/expenses
 
 ###
+http://localhost:5239/api/expenses/byMonth/1
+
+
+###
 http://localhost:5239/api/expenses/summary
 
 ###
@@ -40,3 +44,12 @@ Content-Type: application/json
 {
   "Path" : "D://Projetos//TesteAPIExcel"
 }
+
+###
+POST  http://localhost:5239/api/excel/exportMonthReport/1
+Content-Type: application/json
+
+{
+  "Path" : "D://Projetos//TesteAPIExcel"
+}
+

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 using UnitTests_ExpenseAPI.Repo;
 
@@ -11,10 +12,12 @@ namespace UnitTests_ExpenseAPI
     public class ExpensesController : ControllerBase
     {
          private IBaseRepo<Expense> _baseService;
+        private readonly ILogger<ExpensesController> _logger;
 
-        public ExpensesController(IBaseRepo<Expense> expenseService)
+        public ExpensesController(IBaseRepo<Expense> expenseService, ILogger<ExpensesController> logger)
         {
             _baseService = expenseService;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -27,24 +30,32 @@ namespace UnitTests_ExpenseAPI
         [HttpGet("summary")]
         public async Task<ActionResult> GetAllSummaryDto()
         {
-            var expenses = await _baseService.GetAll(null, "Category");
-
-            List<SummaryExpenseDTO> dtos = new List<SummaryExpenseDTO>();
-
-            foreach(var ex in expenses)
+            try
             {
-                dtos.Add(
-                    new SummaryExpenseDTO
-                    (
-                        ex.ID, 
-                        ex.Category.Description, 
-                        ex.Value, 
-                        ex.Date, 
-                        ex.Category.HexadecimalColor)
-                    );
+                var expenses = await _baseService.GetAll(null, "Category");
+
+                List<SummaryExpenseDTO> dtos = new List<SummaryExpenseDTO>();
+
+                foreach (var ex in expenses)
+                {
+                    dtos.Add(
+                        new SummaryExpenseDTO
+                        (
+                            ex.ID,
+                            ex.Category!.Description!,
+                            ex.Value,
+                            ex.Date,
+                            ex.Category.HexadecimalColor!)
+                        );
+                }
+
+                return Ok(dtos);
             }
 
-            return Ok(dtos);
+            catch(Exception ex)
+            {
+                return NotFound(ex.Message);
+            }   
         }
 
         [HttpGet("{id}")]
@@ -57,6 +68,26 @@ namespace UnitTests_ExpenseAPI
             }
 
             return NotFound();     
+        }
+
+        [HttpGet("byMonth/{month}")]
+        public async Task<ActionResult<SummaryExpenseDTO>> GetByMonth([FromRoute] int month)
+        {
+            if (month < 1 || month > 12) return BadRequest("Invalid month value.");
+
+            try
+            {
+                var expenses = await _baseService.GetAll(e => e.Date.Month == month, "Category");
+                var dtos = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();
+                JsonSerializer.Serialize(dtos);
+                _logger.LogInformation("Controller called: {path} \n {return}", Request.Path.Value, dtos);
+                return Ok(dtos);
+            }
+
+            catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPost]
