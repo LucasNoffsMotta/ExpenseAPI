@@ -1,4 +1,4 @@
-# UnitTests_ExpenseAPI
+# ExpenseAPI
 
 A small ASP.NET Core Web API for managing expenses and exporting Excel reports using ClosedXML. Stores data in SQLite via Entity Framework Core and exposes endpoints to manage expenses and categories and to import/export Excel reports.
 
