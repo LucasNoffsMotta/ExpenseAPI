@@ -1,23 +1,23 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using System.Net;
-using System.Security.Cryptography;
 using UnitTests_ExpenseAPI;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
-using UnitTests_ExpenseAPI.Services.Expense;
+using UnitTests_ExpenseAPI.Repo;
 
 namespace ExpenseAPI.Tests;
 
 public class EspenseControllerTest
 {
-    private Mock<IExpenseService> _expenseServiceMock;
+    private Mock<IBaseRepo<Expense>> _expenseServiceMock;
 
 
     public EspenseControllerTest()
     {
-        _expenseServiceMock = new Mock<IExpenseService>();
+        _expenseServiceMock = new Mock<IBaseRepo<Expense>>();
     }
 
     [Fact]
@@ -31,7 +31,8 @@ public class EspenseControllerTest
                 1,
                 "Ifood",
                 10.0m,
-                DateOnly.MaxValue
+                DateOnly.MaxValue,
+                "#FFFFFF"
             ),
 
             new SummaryExpenseDTO
@@ -39,16 +40,19 @@ public class EspenseControllerTest
                 2,
                 "Ifood",
                 10.0m,
-                DateOnly.MaxValue
+                DateOnly.MaxValue,
+                "#FFFFFF"
             )
         };
 
         //Return type of Expenses Service
         OkObjectResult baseResponse = new OkObjectResult(models);
-        _expenseServiceMock.Setup(um => um.GetAll()).ReturnsAsync(models.ToList);
+        _expenseServiceMock.Setup(um => um.GetAll(null)).Returns(models.ToList);
+
+        ILogger<ExpensesController> dummyLogger = NullLogger<ExpensesController>.Instance;
 
         //Controller
-        ExpensesController controller = new ExpensesController(_expenseServiceMock.Object);
+        ExpensesController controller = new ExpensesController(_expenseServiceMock.Object, dummyLogger);
 
         // 2 .Act
         var expensesListResponse = await controller.GetAll();
@@ -86,13 +90,13 @@ public class EspenseControllerTest
 
         var expense = models.FirstOrDefault(m => m.ID == id);
 
-
-        _expenseServiceMock.Setup(x => x.GetById(id))
-            .ReturnsAsync(expense == null ? null : ExpenseMappings.ExpenseModelToSummaryDTO(expense));
+        _expenseServiceMock.Setup(x => x.GetByID(id))
+            .Returns(Task.FromResult(expense));
 
 
         // 2 .Act
-        var controller = new ExpensesController(_expenseServiceMock.Object);
+        ILogger<ExpensesController> dummyLogger = NullLogger<ExpensesController>.Instance;
+        var controller = new ExpensesController(_expenseServiceMock.Object, dummyLogger);
         var result = await controller.GetByID(id);
 
 
@@ -120,11 +124,12 @@ public class EspenseControllerTest
         var model = ExpenseMappings.ExpenseDtoToModel(createDTO);
 
         //Service
-        _expenseServiceMock.Setup(s => s.Create(createDTO)).ReturnsAsync(true);
+        _expenseServiceMock.Setup(s => s.Create(ExpenseMappings.ExpenseDtoToModel(createDTO))).ReturnsAsync(true);
 
 
         // 2. Act
-        var controller = new ExpensesController(_expenseServiceMock.Object);
+        ILogger<ExpensesController> dummyLogger = NullLogger<ExpensesController>.Instance;
+        var controller = new ExpensesController(_expenseServiceMock.Object, dummyLogger);
         var response = await controller.Create(createDTO);
 
         // 3. Assert
@@ -141,11 +146,12 @@ public class EspenseControllerTest
 
         //Arrange
         int id = 1;
-        _expenseServiceMock.Setup(s=> s.DeleteByID(id)).ReturnsAsync(isIDValid);
+        _expenseServiceMock.Setup(s=> s.Delete(id)).ReturnsAsync(isIDValid);
 
 
         //Act
-        var controller = new ExpensesController(_expenseServiceMock.Object);
+        ILogger<ExpensesController> dummyLogger = NullLogger<ExpensesController>.Instance;
+        var controller = new ExpensesController(_expenseServiceMock.Object, dummyLogger);
         var response = await controller.Delete(id);
 
         //Assert
