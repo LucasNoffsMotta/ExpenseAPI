@@ -24,7 +24,7 @@ namespace UnitTests_ExpenseAPI
         public async Task<ActionResult> GetAll()
         {  
             var expensesList = await _baseService.GetAll();
-            return Ok(expensesList);
+            return Ok(expensesList.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList());
         }
 
         [HttpGet("summary")]
@@ -64,7 +64,7 @@ namespace UnitTests_ExpenseAPI
             var expense = await _baseService.GetByID(id);
             if (expense is not null)
             {
-                return Ok(expense);
+                return Ok(ExpenseMappings.ExpenseModelToSummaryDTO(expense));
             }
 
             return NotFound();     

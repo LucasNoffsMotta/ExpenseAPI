@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using DocumentFormat.OpenXml.Drawing.Diagrams;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Logging;
@@ -13,46 +14,53 @@ namespace ExpenseAPI.Tests;
 public class EspenseControllerTest
 {
     private Mock<IBaseRepo<Expense>> _expenseServiceMock;
+    private readonly ExpensesController controller;
 
 
     public EspenseControllerTest()
     {
         _expenseServiceMock = new Mock<IBaseRepo<Expense>>();
+        ILogger<ExpensesController> dummyLogger = NullLogger<ExpensesController>.Instance;
+        controller = new ExpensesController(_expenseServiceMock.Object, dummyLogger);
     }
 
     [Fact]
     public async Task GetAll_ActionExecutes_CheckResultType_ReturnExpensesDTO()
     {
-        // 1 .Arrange
-        List<SummaryExpenseDTO> models = new List<SummaryExpenseDTO>()
-        {
-            new SummaryExpenseDTO
-            (
-                1,
-                "Ifood",
-                10.0m,
-                DateOnly.MaxValue,
-                "#FFFFFF"
-            ),
 
-            new SummaryExpenseDTO
-            (
-                2,
-                "Ifood",
-                10.0m,
-                DateOnly.MaxValue,
-                "#FFFFFF"
-            )
+        // 1 .Arrange
+
+        UnitTests_ExpenseAPI.Models.Category mockCat = new UnitTests_ExpenseAPI.Models.Category
+        {
+            ID = 1,
+            Description = "Test",
+            HexadecimalColor = "xxxxx"
         };
 
+       List<Expense> models = new List<Expense>()
+       {
+           new Expense
+           {
+               ID = 1,
+               Category = mockCat,
+               CategoryId = 1,
+               Value = 10,
+               Date = DateOnly.MinValue,
+           },
+           new Expense
+           {
+               ID = 2,
+               Category = mockCat,
+               CategoryId = 1,
+               Value = 10,
+               Date = DateOnly.MinValue,
+           },
+       };
+
+
         //Return type of Expenses Service
-        OkObjectResult baseResponse = new OkObjectResult(models);
-        _expenseServiceMock.Setup(um => um.GetAll(null)).Returns(models.ToList);
-
-        ILogger<ExpensesController> dummyLogger = NullLogger<ExpensesController>.Instance;
-
-        //Controller
-        ExpensesController controller = new ExpensesController(_expenseServiceMock.Object, dummyLogger);
+        OkObjectResult baseResponse = new OkObjectResult(models.Select(m => ExpenseMappings.ExpenseModelToSummaryDTO(m)));
+        _expenseServiceMock.Setup(um => um.GetAll(null)).ReturnsAsync(models.ToList);
 
         // 2 .Act
         var expensesListResponse = await controller.GetAll();
@@ -65,47 +73,56 @@ public class EspenseControllerTest
     }
 
     [Theory]
-    [InlineData(0)]
     [InlineData(1)]
     [InlineData(2)]
+    [InlineData(3)]
     public async Task GetById_ActionExecutes_CheckResultType_ReturnSingleObject(int id)
     {
         // 1 .Arrange
-        List<Expense> models = new List<Expense>()
-        {
-            new Expense
-            {
-             ID = 0,
-             Value=10.0m,
-             Date = DateOnly.MaxValue
-            },
 
-            new Expense
-            {
-             ID = 1,
-             Value=90.0m,
-             Date = DateOnly.MaxValue
-            },
+        UnitTests_ExpenseAPI.Models.Category mockCat = new UnitTests_ExpenseAPI.Models.Category
+        {
+            ID = 1,
+            Description = "Test",
+            HexadecimalColor = "xxxxx"
         };
+        List<Expense> models = new List<Expense>()
+       {
+           new Expense
+           {
+               ID = 1,
+               Category = mockCat,
+               CategoryId = 1,
+               Value = 10,
+               Date = DateOnly.MinValue,
+           },
+           new Expense
+           {
+               ID = 2,
+               Category = mockCat,
+               CategoryId = 1,
+               Value = 10,
+               Date = DateOnly.MinValue,
+           },
+       };
 
         var expense = models.FirstOrDefault(m => m.ID == id);
 
         _expenseServiceMock.Setup(x => x.GetByID(id))
-            .Returns(Task.FromResult(expense));
+            .ReturnsAsync(expense);
 
 
         // 2 .Act
-        ILogger<ExpensesController> dummyLogger = NullLogger<ExpensesController>.Instance;
-        var controller = new ExpensesController(_expenseServiceMock.Object, dummyLogger);
         var result = await controller.GetByID(id);
 
 
         // 3 .Assert
-        if (id < models.Count)
+        if (models.Any(e => e.ID == id))
         {
             var okResult = Assert.IsType<OkObjectResult>(result);
             var item = Assert.IsType<SummaryExpenseDTO>(okResult.Value);
-            Assert.Equal((models.Where(m => m.ID == id).First()).Value, item.Valor);
+            Assert.Equal(
+                ExpenseMappings.ExpenseModelToSummaryDTO(models.Where(m => m.ID == id).First()).Valor, item.Valor);
         }
 
         else
@@ -121,15 +138,12 @@ public class EspenseControllerTest
 
         //Valid Model
         var createDTO = new CreateExpenseDTO(1, 10.0m, DateOnly.MaxValue);
-        var model = ExpenseMappings.ExpenseDtoToModel(createDTO);
 
         //Service
         _expenseServiceMock.Setup(s => s.Create(ExpenseMappings.ExpenseDtoToModel(createDTO))).ReturnsAsync(true);
 
 
         // 2. Act
-        ILogger<ExpensesController> dummyLogger = NullLogger<ExpensesController>.Instance;
-        var controller = new ExpensesController(_expenseServiceMock.Object, dummyLogger);
         var response = await controller.Create(createDTO);
 
         // 3. Assert
@@ -150,8 +164,6 @@ public class EspenseControllerTest
 
 
         //Act
-        ILogger<ExpensesController> dummyLogger = NullLogger<ExpensesController>.Instance;
-        var controller = new ExpensesController(_expenseServiceMock.Object, dummyLogger);
         var response = await controller.Delete(id);
 
         //Assert
