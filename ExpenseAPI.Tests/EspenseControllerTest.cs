@@ -139,8 +139,21 @@ public class EspenseControllerTest
         //Valid Model
         var createDTO = new CreateExpenseDTO(1, 10.0m, DateOnly.MaxValue);
 
+        var returnModel = ExpenseMappings.ExpenseDtoToModel(createDTO);
+
+        UnitTests_ExpenseAPI.Models.Category mockCat = new UnitTests_ExpenseAPI.Models.Category
+        {
+            ID = 1,
+            Description = "Test",
+            HexadecimalColor = "xxxxx"
+        };
+
+        returnModel.Category = mockCat;
+
         //Service
-        _expenseServiceMock.Setup(s => s.Create(ExpenseMappings.ExpenseDtoToModel(createDTO))).ReturnsAsync(true);
+        _expenseServiceMock
+                .Setup(s => s.Create(It.IsAny<Expense>()))
+                .ReturnsAsync(returnModel);
 
 
         // 2. Act
@@ -148,7 +161,7 @@ public class EspenseControllerTest
 
         // 3. Assert
         var result = Assert.IsType<OkObjectResult>(response);
-        var created = Assert.IsType<CreateExpenseDTO>(result.Value);
+        var created = Assert.IsType<SummaryExpenseDTO>(result.Value);
     }
 
 

@@ -93,8 +93,9 @@ namespace UnitTests_ExpenseAPI
         [HttpPost]
         public async Task<ActionResult> Create(CreateExpenseDTO dto)
         {
-            bool success = await _baseService.Create(ExpenseMappings.ExpenseDtoToModel(dto));
-            return success ? Ok(dto) : BadRequest(dto);
+            
+            var model = await _baseService.Create(ExpenseMappings.ExpenseDtoToModel(dto));
+            return model is null ? BadRequest(dto) : Ok(ExpenseMappings.ExpenseModelToSummaryDTO(model));
         }
 
         [HttpDelete("{id}")]

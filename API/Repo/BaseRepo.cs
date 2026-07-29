@@ -19,11 +19,11 @@ namespace UnitTests_ExpenseAPI.Repo
             return includes.Aggregate(query, (current, include) => current.Include(include));
         }
 
-        public async Task<bool> Create(T dto)
+        public async Task<T> Create(T model)
         {
-            await _dbContext.Set<T>().AddAsync(dto);
-            int changes = await _dbContext.SaveChangesAsync();
-            return changes > 0;
+            await _dbContext.Set<T>().AddAsync(model);
+            await _dbContext.SaveChangesAsync();
+            return model;
         }
 
         public async Task<bool> Delete(int id)

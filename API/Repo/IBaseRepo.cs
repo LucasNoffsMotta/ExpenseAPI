@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using UnitTests_ExpenseAPI.Models;
 
 namespace UnitTests_ExpenseAPI.Repo
 {
@@ -7,7 +8,7 @@ namespace UnitTests_ExpenseAPI.Repo
         public Task<T?> GetByID(int id);
         public Task<List<T>> GetAll(Expression<Func<T, bool>>? where = null, params string[] includes);
 
-        public Task<bool> Create(T dto);
+        public Task<T> Create(T dto);
 
         public Task<bool> Update(T dto);
 
