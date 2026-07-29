@@ -71,7 +71,7 @@ namespace UnitTests_ExpenseAPI
         }
 
         [HttpGet("byMonth/{month}")]
-        public async Task<ActionResult<SummaryExpenseDTO>> GetByMonth([FromRoute] int month)
+        public async Task<ActionResult> GetByMonth([FromRoute] int month)
         {
             if (month < 1 || month > 12) return BadRequest("Invalid month value.");
 
@@ -80,7 +80,7 @@ namespace UnitTests_ExpenseAPI
                 var expenses = await _baseService.GetAll(e => e.Date.Month == month, "Category");
                 var dtos = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();
                 JsonSerializer.Serialize(dtos);
-                _logger.LogInformation("Controller called: {path} \n {return}", Request.Path.Value, dtos);
+                _logger.LogInformation("Controller called: {path} \n {return}", Request.Path.Value ?? "Not found", dtos);
                 return Ok(dtos);
             }
 

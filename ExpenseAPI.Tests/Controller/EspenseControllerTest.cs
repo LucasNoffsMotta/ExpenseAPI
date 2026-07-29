@@ -1,15 +1,18 @@
 ﻿using DocumentFormat.OpenXml.Drawing.Diagrams;
+using ExpenseAPI.Tests.Fixtures;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using UnitTests_ExpenseAPI;
+using UnitTests_ExpenseAPI.DTO.CategoryDTO;
 using UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 using UnitTests_ExpenseAPI.Repo;
 
-namespace ExpenseAPI.Tests;
+namespace ExpenseAPI.Tests.Controller;
 
 public class EspenseControllerTest
 {
@@ -27,40 +30,9 @@ public class EspenseControllerTest
     [Fact]
     public async Task GetAll_ActionExecutes_CheckResultType_ReturnExpensesDTO()
     {
-
-        // 1 .Arrange
-
-        UnitTests_ExpenseAPI.Models.Category mockCat = new UnitTests_ExpenseAPI.Models.Category
-        {
-            ID = 1,
-            Description = "Test",
-            HexadecimalColor = "xxxxx"
-        };
-
-       List<Expense> models = new List<Expense>()
-       {
-           new Expense
-           {
-               ID = 1,
-               Category = mockCat,
-               CategoryId = 1,
-               Value = 10,
-               Date = DateOnly.MinValue,
-           },
-           new Expense
-           {
-               ID = 2,
-               Category = mockCat,
-               CategoryId = 1,
-               Value = 10,
-               Date = DateOnly.MinValue,
-           },
-       };
-
-
-        //Return type of Expenses Service
-        OkObjectResult baseResponse = new OkObjectResult(models.Select(m => ExpenseMappings.ExpenseModelToSummaryDTO(m)));
-        _expenseServiceMock.Setup(um => um.GetAll(null)).ReturnsAsync(models.ToList);
+        //Arrange
+        OkObjectResult baseResponse = new OkObjectResult(ExpenseFixture.DefaultExpenseList.Select(m => ExpenseMappings.ExpenseModelToSummaryDTO(m)));
+        _expenseServiceMock.Setup(um => um.GetAll(null)).ReturnsAsync(ExpenseFixture.DefaultExpenseList);
 
         // 2 .Act
         var expensesListResponse = await controller.GetAll();
@@ -79,34 +51,7 @@ public class EspenseControllerTest
     public async Task GetById_ActionExecutes_CheckResultType_ReturnSingleObject(int id)
     {
         // 1 .Arrange
-
-        UnitTests_ExpenseAPI.Models.Category mockCat = new UnitTests_ExpenseAPI.Models.Category
-        {
-            ID = 1,
-            Description = "Test",
-            HexadecimalColor = "xxxxx"
-        };
-        List<Expense> models = new List<Expense>()
-       {
-           new Expense
-           {
-               ID = 1,
-               Category = mockCat,
-               CategoryId = 1,
-               Value = 10,
-               Date = DateOnly.MinValue,
-           },
-           new Expense
-           {
-               ID = 2,
-               Category = mockCat,
-               CategoryId = 1,
-               Value = 10,
-               Date = DateOnly.MinValue,
-           },
-       };
-
-        var expense = models.FirstOrDefault(m => m.ID == id);
+        var expense = ExpenseFixture.DefaultExpenseList.FirstOrDefault(m => m.ID == id);
 
         _expenseServiceMock.Setup(x => x.GetByID(id))
             .ReturnsAsync(expense);
@@ -117,12 +62,13 @@ public class EspenseControllerTest
 
 
         // 3 .Assert
-        if (models.Any(e => e.ID == id))
+        if (ExpenseFixture.DefaultExpenseList.Any(e => e.ID == id))
         {
             var okResult = Assert.IsType<OkObjectResult>(result);
             var item = Assert.IsType<SummaryExpenseDTO>(okResult.Value);
+
             Assert.Equal(
-                ExpenseMappings.ExpenseModelToSummaryDTO(models.Where(m => m.ID == id).First()).Valor, item.Valor);
+                ExpenseMappings.ExpenseModelToSummaryDTO(ExpenseFixture.DefaultExpenseList.Where(m => m.ID == id).First()).Valor, item.Valor);
         }
 
         else
@@ -135,11 +81,7 @@ public class EspenseControllerTest
     public async Task Create_ActionExecute_CheckResultType()
     {
         // 1 .Arrange
-
-        //Valid Model
-        var createDTO = new CreateExpenseDTO(1, 10.0m, DateOnly.MaxValue);
-
-        var returnModel = ExpenseMappings.ExpenseDtoToModel(createDTO);
+        var returnModel = ExpenseMappings.ExpenseDtoToModel(ExpenseFixture.CreateExpenseDTO);
 
         UnitTests_ExpenseAPI.Models.Category mockCat = new UnitTests_ExpenseAPI.Models.Category
         {
@@ -157,11 +99,72 @@ public class EspenseControllerTest
 
 
         // 2. Act
-        var response = await controller.Create(createDTO);
+        var response = await controller.Create(ExpenseFixture.CreateExpenseDTO);
 
         // 3. Assert
         var result = Assert.IsType<OkObjectResult>(response);
         var created = Assert.IsType<SummaryExpenseDTO>(result.Value);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(20)]
+    public async Task GetByMonth_ActionExecute_CheckResultType(int month)
+    {
+        //1.Arrange
+        _expenseServiceMock.Setup(s => s.GetAll(e => e.Date.Month == month, "Category")).ReturnsAsync(ExpenseFixture.DefaultExpenseList);
+
+        //2.Act
+        var response = await controller.GetByMonth(month);
+
+        //3.Assert
+
+        if (month < 1 || month > 12)
+        { 
+            Assert.IsType<BadRequestObjectResult>(response);
+        }
+
+        else
+        {
+            Assert.IsType<OkObjectResult>(response);
+        }
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    [InlineData(10)]
+    [InlineData(11)]
+    [InlineData(12)]
+    [InlineData(0)]
+    [InlineData(20)]
+    public async Task GetByMonth_ActionExecute_CheckReturnData(int month)
+    {
+        //1.Arrange
+        _expenseServiceMock.Setup(s => s.GetAll(e => e.Date.Month == month, "Category")).ReturnsAsync(ExpenseFixture.DefaultExpenseList);
+
+        //2.Act
+        var response = await controller.GetByMonth(month);
+
+        //3.Assert
+        if (month >= 1 && month <= 12)
+        {
+            var okResult = response as OkObjectResult;
+            var responseList = okResult!.Value;
+            Assert.IsType<List<SumaryCategoryDTO>>(responseList);
+
+            foreach (var v in responseList as List<SummaryExpenseDTO>)
+            {
+                Assert.True(v.Data!.Value.Month == month);
+            }
+        }
     }
 
 
@@ -170,7 +173,6 @@ public class EspenseControllerTest
     [InlineData(false)]
     public async Task Delete_ActionExecute_CheckResultType(bool isIDValid)
     {
-
         //Arrange
         int id = 1;
         _expenseServiceMock.Setup(s=> s.Delete(id)).ReturnsAsync(isIDValid);
