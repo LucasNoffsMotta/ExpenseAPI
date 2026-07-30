@@ -15,7 +15,7 @@ namespace ExpenseAPI.Tests.Fixtures
             Category = CategoryFixture.DefaultCategory,
             CategoryId = 1,
             Value = 10,
-            Date = DateOnly.MinValue
+            Date = date
         };
 
         public static List<Expense> DefaultExpenseList => new List<Expense>()
