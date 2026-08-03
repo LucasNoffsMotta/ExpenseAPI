@@ -13,7 +13,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString)); 
 
 builder.Services.AddScoped<IBaseRepo<Category>, BaseRepo<Category>>();
-builder.Services.AddScoped<IBaseRepo<Expense>, BaseRepo<Expense>>();
+builder.Services.AddScoped<IBaseRepo<Transaction>, BaseRepo<Transaction>>();
 builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

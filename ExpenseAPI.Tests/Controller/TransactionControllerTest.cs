@@ -15,17 +15,17 @@ using UnitTests_ExpenseAPI.Repo;
 
 namespace ExpenseAPI.Tests.Controller;
 
-public class EspenseControllerTest
+public class TransactionControllerTest
 {
-    private Mock<IBaseRepo<Expense>> _expenseServiceMock;
-    private readonly ExpensesController controller;
+    private Mock<IBaseRepo<Transaction>> _expenseServiceMock;
+    private readonly TransactionController controller;
 
 
-    public EspenseControllerTest()
+    public TransactionControllerTest()
     {
-        _expenseServiceMock = new Mock<IBaseRepo<Expense>>();
-        ILogger<ExpensesController> dummyLogger = NullLogger<ExpensesController>.Instance;
-        controller = new ExpensesController(_expenseServiceMock.Object, dummyLogger);
+        _expenseServiceMock = new Mock<IBaseRepo<Transaction>>();
+        ILogger<TransactionController> dummyLogger = NullLogger<TransactionController>.Instance;
+        controller = new TransactionController(_expenseServiceMock.Object, dummyLogger);
     }
 
     [Fact]
@@ -33,8 +33,8 @@ public class EspenseControllerTest
     {
         // 1 .Arrange
         _expenseServiceMock.Setup(s => s.GetAll(
-                    It.IsAny<Expression<Func<Expense, bool>>>(),
-                    "Category")).ReturnsAsync(ExpenseFixture.DefaultExpenseList);
+                    It.IsAny<Expression<Func<Transaction, bool>>>(),
+                    "Category")).ReturnsAsync(TransactionFixture.DefaultExpenseList);
 
         // 2 .Act
         var expensesListResponse = await controller.GetAll();
@@ -43,7 +43,7 @@ public class EspenseControllerTest
 
         //Test response type
         var okResult = Assert.IsType<OkObjectResult>(expensesListResponse);
-        Assert.IsType<List<SummaryExpenseDTO>>(okResult.Value);
+        Assert.IsType<List<SummaryTransactionDTO>>(okResult.Value);
 
         _expenseServiceMock.Verify(s => s.GetAll(null, "category"), Times.Once);
     }
@@ -55,7 +55,7 @@ public class EspenseControllerTest
     public async Task GetById_ReturnsOk_WhenExpenseExists(int id)
     {
         // 1 .Arrange
-        var expense = ExpenseFixture.DefaultExpenseList.FirstOrDefault(m => m.ID == id);
+        var expense = TransactionFixture.DefaultExpenseList.FirstOrDefault(m => m.ID == id);
 
         _expenseServiceMock.Setup(x => x.GetByID(id))
             .ReturnsAsync(expense);
@@ -66,10 +66,10 @@ public class EspenseControllerTest
 
 
         // 3 .Assert
-        if (ExpenseFixture.DefaultExpenseList.Any(e => e.ID == id))
+        if (TransactionFixture.DefaultExpenseList.Any(e => e.ID == id))
         {
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var item = Assert.IsType<SummaryExpenseDTO>(okResult.Value);
+            var item = Assert.IsType<SummaryTransactionDTO>(okResult.Value);
         }
 
         else
@@ -86,31 +86,31 @@ public class EspenseControllerTest
     public async Task Create_ReturnsOk_WhenServiceCreatesExpense(bool createSucceeded)
     {
         // 1. Arrange
-        Expense returnModel = createSucceeded ? ExpenseFixture.DefaultExpense(1, DateOnly.MinValue) : null;
+        Transaction returnModel = createSucceeded ? TransactionFixture.DefaultTransaction(1, DateOnly.MinValue) : null;
 
         _expenseServiceMock
-                .Setup(s => s.Create(It.IsAny<Expense>()))
+                .Setup(s => s.Create(It.IsAny<Transaction>()))
                 .ReturnsAsync(returnModel);
 
 
         // 2. Act
-        var response = await controller.Create(ExpenseFixture.CreateExpenseDTO);
+        var response = await controller.Create(TransactionFixture.CreateExpenseDTO);
 
         // 3. Assert
 
         if (createSucceeded)
         {
             var result = Assert.IsType<OkObjectResult>(response);
-            var created = Assert.IsType<SummaryExpenseDTO>(result.Value);
+            var created = Assert.IsType<SummaryTransactionDTO>(result.Value);
         }
 
         else
         {
             var result = Assert.IsType<BadRequestObjectResult>(response);
-            var wrongDto = Assert.IsType<CreateExpenseDTO>(result.Value);
+            var wrongDto = Assert.IsType<CreateTransactionDTO>(result.Value);
         }
 
-        _expenseServiceMock.Verify(s => s.Create(It.IsAny<Expense>()), Times.Once);
+        _expenseServiceMock.Verify(s => s.Create(It.IsAny<Transaction>()), Times.Once);
     }
 
     [Theory]
@@ -120,8 +120,8 @@ public class EspenseControllerTest
     {
         //1.Arrange
         _expenseServiceMock.Setup(s => s.GetAll(
-            It.IsAny<Expression<Func<Expense, bool>>>(),
-            "Category")).ReturnsAsync(ExpenseFixture.DefaultExpenseList);
+            It.IsAny<Expression<Func<Transaction, bool>>>(),
+            "Category")).ReturnsAsync(TransactionFixture.DefaultExpenseList);
 
         //2.Act
         var response = await controller.GetByMonth(month);
@@ -132,14 +132,14 @@ public class EspenseControllerTest
         { 
             Assert.IsType<BadRequestObjectResult>(response);
             _expenseServiceMock.Verify(
-                s => s.GetAll(It.IsAny<Expression<Func<Expense, bool>>>(), "Category"),
+                s => s.GetAll(It.IsAny<Expression<Func<Transaction, bool>>>(), "Category"),
                 Times.Never);
         }
 
         else
         {
             Assert.IsType<OkObjectResult>(response);
-            _expenseServiceMock.Verify(s => s.GetAll(It.IsAny<Expression<Func<Expense, bool>>>(), "Category"), Times.Once);
+            _expenseServiceMock.Verify(s => s.GetAll(It.IsAny<Expression<Func<Transaction, bool>>>(), "Category"), Times.Once);
         }
     }
 

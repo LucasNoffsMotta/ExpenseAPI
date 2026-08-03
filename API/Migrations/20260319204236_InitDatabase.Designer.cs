@@ -20,7 +20,7 @@ namespace UnitTests_ExpenseAPI.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.3");
 
-            modelBuilder.Entity("UnitTests_ExpenseAPI.Expense", b =>
+            modelBuilder.Entity("UnitTests_ExpenseAPI.Transaction", b =>
                 {
                     b.Property<int>("ID")
                         .ValueGeneratedOnAdd()

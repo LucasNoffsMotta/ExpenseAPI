@@ -13,11 +13,11 @@ namespace UnitTests_ExpenseAPI.Controllers
     [ApiController]
     public class ExcelController : Controller
     {
-        private IBaseRepo<Expense> _expenseService;
+        private IBaseRepo<Transaction> _expenseService;
         private IExcelService _excelService;
         private IConfiguration _config;
 
-        public ExcelController(IBaseRepo<Expense> expenseService, IExcelService excelService, IConfiguration config)
+        public ExcelController(IBaseRepo<Transaction> expenseService, IExcelService excelService, IConfiguration config)
         {
             _expenseService = expenseService;
             _excelService = excelService;
@@ -25,7 +25,7 @@ namespace UnitTests_ExpenseAPI.Controllers
         }
 
         [HttpPost("exportMonthReport")]
-        public async Task<ActionResult<SummaryExpenseDTO>> ExportMonthReport([FromQuery] int month, [FromBody] ExportFolderDTO folder)
+        public async Task<ActionResult<SummaryTransactionDTO>> ExportMonthReport([FromQuery] int month, [FromBody] ExportFolderDTO folder)
         {
             DateOnly date = new DateOnly(2025, month, 1);
             string monthName = date.ToString("MMM");
@@ -36,7 +36,7 @@ namespace UnitTests_ExpenseAPI.Controllers
             try
             {
                 var expenses = await _expenseService.GetAll(e => e.Date.Month == month, "Category");
-                var dtos = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();
+                var dtos = expenses.Select(e => TransactionMappings.TransactionModelToSummaryDTO(e)).ToList();
                 var book = _excelService.ExportMonthWorkbook(monthName, dtos);
                 book.SaveAs(filePath);
                 exportDTO.ExportStatus = $"Report exported to {filePath}.";
@@ -59,7 +59,7 @@ namespace UnitTests_ExpenseAPI.Controllers
         {
             string filePath = Path.Combine(folder.Path, $"YearReport_{DateTime.Now.Date.ToString("yyyy-MM-dd")}.xlsx");
             var expenses = await _expenseService.GetAll(null, "Category");
-            var expensesDTO = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();
+            var expensesDTO = expenses.Select(e => TransactionMappings.TransactionModelToSummaryDTO(e)).ToList();
             XLWorkbook book = new XLWorkbook();
             ReportExportDTO exportDTO = new ReportExportDTO();
 
@@ -91,7 +91,7 @@ namespace UnitTests_ExpenseAPI.Controllers
             try
             {
                 XLWorkbook data = new XLWorkbook(fileDTO.DataFile);
-                var expenses = await _excelService.GetObjectsFromExcel(data, typeof(CreateExpenseDTO));
+                var expenses = await _excelService.GetObjectsFromExcel(data, typeof(CreateTransactionDTO));
                 
                 //foreach(var expense in expenses)
                 //{

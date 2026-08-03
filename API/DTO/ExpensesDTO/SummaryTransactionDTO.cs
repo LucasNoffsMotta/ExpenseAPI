@@ -1,6 +1,6 @@
 namespace UnitTests_ExpenseAPI.DTO.ExpensesDTO;
 
-public class SummaryExpenseDTO
+public class SummaryTransactionDTO
 {
     public int ID { get; set; }
     public string? Descricao { get; set; }
@@ -8,7 +8,7 @@ public class SummaryExpenseDTO
     public DateOnly? Data { get; set; }
     public string Color { get; set; }
 
-    public SummaryExpenseDTO(int id, string description, decimal value, DateOnly date, string color)
+    public SummaryTransactionDTO(int id, string description, decimal value, DateOnly date, string color)
     {
         ID = id;
         Descricao = description;

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using UnitTests_ExpenseAPI.Models;
 
 namespace UnitTests_ExpenseAPI;
-public class Expense : BaseModel
+public class Transaction : BaseModel
 {
     public Category? Category { get; set; }
 

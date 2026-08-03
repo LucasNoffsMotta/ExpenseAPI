@@ -17,14 +17,14 @@ namespace UnitTests_ExpenseAPI.Services.Excel
            
         }
 
-        public DataTable? CreateDataTableFromExpensesDTO(List<SummaryExpenseDTO>? _expenses)
+        public DataTable? CreateDataTableFromExpensesDTO(List<SummaryTransactionDTO>? _expenses)
         {
             //Temp:
             string[] columnsToIgnoreOnDataTable = { "ID" };
    
             if (_expenses?.Count == 0 || _expenses == null) return null;
 
-            Type type = typeof(SummaryExpenseDTO);
+            Type type = typeof(SummaryTransactionDTO);
             var columnHeaders = type.GetProperties();
             int tableColumnsRange = columnHeaders.Length;
 
@@ -46,11 +46,11 @@ namespace UnitTests_ExpenseAPI.Services.Excel
         }
 
         //Ignoring the year here...
-        public async Task<XLWorkbook> ExportFullYearWorkbook(XLWorkbook workBook, List<SummaryExpenseDTO> _expenses)
+        public async Task<XLWorkbook> ExportFullYearWorkbook(XLWorkbook workBook, List<SummaryTransactionDTO> _expenses)
         {
             IXLWorksheet[] sheets = new IXLWorksheet[12];
             Dictionary<string, IXLWorksheet> monthTableMap = new Dictionary<string, IXLWorksheet>();
-            Dictionary<string, List<SummaryExpenseDTO>> monthDtoMap = new Dictionary<string, List<SummaryExpenseDTO>>();
+            Dictionary<string, List<SummaryTransactionDTO>> monthDtoMap = new Dictionary<string, List<SummaryTransactionDTO>>();
 
             for (int i = 1; i < 13; i++)
             {
@@ -60,7 +60,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
                 monthTableMap[sheetTitle] = monthSheet;
             }
 
-            foreach (SummaryExpenseDTO expense in _expenses)
+            foreach (SummaryTransactionDTO expense in _expenses)
             {
                 var key = expense.Data!.Value.ToString("MMM");
 
@@ -71,13 +71,13 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
                 else
                 {
-                    List<SummaryExpenseDTO> dtoList = new List<SummaryExpenseDTO>();
+                    List<SummaryTransactionDTO> dtoList = new List<SummaryTransactionDTO>();
                     dtoList.Add(expense);
                     monthDtoMap[key] = dtoList;
                 }
             }
 
-            foreach (KeyValuePair<string, List<SummaryExpenseDTO>> mapItem in monthDtoMap)
+            foreach (KeyValuePair<string, List<SummaryTransactionDTO>> mapItem in monthDtoMap)
             {
                 var monthSheet = monthTableMap[mapItem.Key];
                 var dt = CreateDataTableFromExpensesDTO(mapItem.Value);
@@ -124,12 +124,12 @@ namespace UnitTests_ExpenseAPI.Services.Excel
         }
 
         //TODO
-        public async Task<List<CreateExpenseDTO>> GetObjectsFromExcel(XLWorkbook excelData, Type baseModel)
+        public async Task<List<CreateTransactionDTO>> GetObjectsFromExcel(XLWorkbook excelData, Type baseModel)
         {
             //IXLWorksheet sheet = excelData.Worksheets.First();
             //var columnHeaders = baseModel.GetProperties();
 
-            //List<CreateExpenseDTO> expenses = new List<CreateExpenseDTO>();
+            //List<CreateTransactionDTO> expenses = new List<CreateTransactionDTO>();
             //int columnCount = sheet.LastColumnUsed()!.ColumnNumber();
             //int rowCount = sheet.LastRowUsed()!.RowNumber();
             //int firstColumn = 2; //Ignore the ID column..
@@ -144,14 +144,14 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             //    DateTime dt = DateTime.Parse(sheet.Cell(row + 2, firstColumn + 2).Value.ToString());
             //    DateOnly date = DateOnly.FromDateTime(dt);
 
-            //    expenses.Add(new CreateExpenseDTO(
+            //    expenses.Add(new CreateTransactionDTO(
             //        category.ID,
             //        value,
             //        date)
             //    );
             //}
 
-            return new List<CreateExpenseDTO>();
+            return new List<CreateTransactionDTO>();
         }
 
         public IXLWorksheet CreateExcelSheetBasedOnDataTable(DataTable table, IXLWorksheet sheet)
@@ -282,7 +282,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
 
         }
 
-        private void InsertTotalCategoryPerMonth(IXLWorksheet sheet, IXLTable table, List<SummaryExpenseDTO>? dtoList)
+        private void InsertTotalCategoryPerMonth(IXLWorksheet sheet, IXLTable table, List<SummaryTransactionDTO>? dtoList)
         {
             var categories = 
                 dtoList!
@@ -315,7 +315,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             }
         }
 
-        public void InsertBaseSheet(IXLWorkbook book, List<SummaryExpenseDTO> _expenses)
+        public void InsertBaseSheet(IXLWorkbook book, List<SummaryTransactionDTO> _expenses)
         {
             
             var baseSheet = book.AddWorksheet("Base");
@@ -376,7 +376,7 @@ namespace UnitTests_ExpenseAPI.Services.Excel
             cell.Style.Fill.SetBackgroundColor(color);
         }
 
-        public XLWorkbook ExportMonthWorkbook(string month, List<SummaryExpenseDTO> _expenses)
+        public XLWorkbook ExportMonthWorkbook(string month, List<SummaryTransactionDTO> _expenses)
         {
             try
             {

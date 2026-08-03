@@ -9,12 +9,12 @@ namespace UnitTests_ExpenseAPI
    
     [Route("api/[controller]")]
     [ApiController]
-    public class ExpensesController : ControllerBase
+    public class TransactionController : ControllerBase
     {
-         private IBaseRepo<Expense> _baseService;
-        private readonly ILogger<ExpensesController> _logger;
+         private IBaseRepo<Transaction> _baseService;
+        private readonly ILogger<TransactionController> _logger;
 
-        public ExpensesController(IBaseRepo<Expense> expenseService, ILogger<ExpensesController> logger)
+        public TransactionController(IBaseRepo<Transaction> expenseService, ILogger<TransactionController> logger)
         {
             _baseService = expenseService;
             _logger = logger;
@@ -24,7 +24,7 @@ namespace UnitTests_ExpenseAPI
         public async Task<ActionResult> GetAll()
         {  
             var expensesList = await _baseService.GetAll(null, "category");
-            return Ok(expensesList.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList());
+            return Ok(expensesList.Select(e => TransactionMappings.TransactionModelToSummaryDTO(e)).ToList());
         }
 
         [HttpGet("{id}")]
@@ -33,7 +33,7 @@ namespace UnitTests_ExpenseAPI
             var expense = await _baseService.GetByID(id);
             if (expense is not null)
             {
-                return Ok(ExpenseMappings.ExpenseModelToSummaryDTO(expense));
+                return Ok(TransactionMappings.TransactionModelToSummaryDTO(expense));
             }
 
             return NotFound();     
@@ -47,7 +47,7 @@ namespace UnitTests_ExpenseAPI
             try
             {
                 var expenses = await _baseService.GetAll(e => e.Date.Month == month, "Category");
-                var dtos = expenses.Select(e => ExpenseMappings.ExpenseModelToSummaryDTO(e)).ToList();
+                var dtos = expenses.Select(e => TransactionMappings.TransactionModelToSummaryDTO(e)).ToList();
                 return Ok(dtos);
             }
 
@@ -58,11 +58,11 @@ namespace UnitTests_ExpenseAPI
         }
 
         [HttpPost]
-        public async Task<ActionResult> Create(CreateExpenseDTO dto)
+        public async Task<ActionResult> Create(CreateTransactionDTO dto)
         {
             
-            var model = await _baseService.Create(ExpenseMappings.ExpenseDtoToModel(dto));
-            return model is null ? BadRequest(dto) : Ok(ExpenseMappings.ExpenseModelToSummaryDTO(model));
+            var model = await _baseService.Create(TransactionMappings.TransactionDtoToModel(dto));
+            return model is null ? BadRequest(dto) : Ok(TransactionMappings.TransactionModelToSummaryDTO(model));
         }
 
         [HttpDelete("{id}")]
